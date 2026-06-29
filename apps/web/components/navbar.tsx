@@ -1,3 +1,5 @@
+import { UploadButton } from "@/components/uploader";
+
 // Navbar superior — vidro fosco, respira. Interatividade (busca, tema, perfil) entra na Fase 2.
 export function Navbar() {
   return (
@@ -16,21 +18,13 @@ export function Navbar() {
         </div>
 
         <nav className="flex items-center gap-1.5">
-          <PillButton>Upload</PillButton>
+          <UploadButton label="Upload" variant="ghost" />
           <IconButton label="Notificações"><BellGlyph /></IconButton>
           <IconButton label="Tema"><MoonGlyph /></IconButton>
           <span className="ml-1 size-8 rounded-full bg-[var(--color-line)]" />
         </nav>
       </div>
     </header>
-  );
-}
-
-function PillButton({ children }: { children: React.ReactNode }) {
-  return (
-    <button className="rounded-full bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90">
-      {children}
-    </button>
   );
 }
 
