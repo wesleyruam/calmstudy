@@ -1,0 +1,25 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# builds
+.next/
+out/
+dist/
+.turbo/
+*.tsbuildinfo
+
+# env
+.env
+.env.local
+.env.*.local
+
+# storage (uploads no dev)
+/storage/
+
+# prisma
+packages/db/prisma/*.db
+
+# logs / os
+*.log
+.DS_Store

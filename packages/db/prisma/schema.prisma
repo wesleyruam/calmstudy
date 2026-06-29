@@ -1,0 +1,265 @@
+// CalmBook — schema Prisma. Mapeia docs/DATA-MODEL.md.
+// Fase 1: User, Book, UserBook + organização (Shelf/Collection/Tag) + marcações.
+// Fase 5 adiciona Embedding (pgvector). Veja docs/ROADMAP.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────────── Enums ─────────────────────────────
+
+enum BookFormat {
+  PDF
+  EPUB
+  MOBI
+  CBZ
+  CBR
+  TXT
+  MD
+  DOCX
+  HTML
+}
+
+enum BookStatus {
+  UPLOADING
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum ReadingStatus {
+  WANT_TO_READ
+  READING
+  FINISHED
+  PAUSED
+}
+
+enum Priority {
+  LOW
+  MED
+  HIGH
+}
+
+enum HighlightColor {
+  YELLOW
+  GREEN
+  BLUE
+  PURPLE
+  RED
+  ORANGE
+}
+
+// ───────────────────────────── Núcleo ─────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  name         String?
+  email        String   @unique
+  passwordHash String?
+  image        String?
+  settings     Json     @default("{}")
+  createdAt    DateTime @default(now())
+
+  userBooks   UserBook[]
+  shelves     Shelf[]
+  collections Collection[]
+  tags        Tag[]
+}
+
+// O documento em si (fato objetivo, deduplicável entre usuários).
+model Book {
+  id          String     @id @default(uuid())
+  title       String
+  author      String?
+  description String?
+  coverUrl    String?
+  isbn        String?
+  language    String?
+  pages       Int?
+  format      BookFormat
+  fileKey     String // chave no StorageProvider (FS/MinIO)
+  fileSize    BigInt
+  status      BookStatus @default(UPLOADING)
+  metadata    Json       @default("{}") // ano, editora, categorias, específicos do formato
+  textContent String? // texto extraído (FTS) — mover p/ tabela à parte se crescer
+  createdAt   DateTime   @default(now())
+
+  userBooks UserBook[]
+
+  @@index([isbn])
+}
+
+// A relação do usuário com o livro (estado pessoal + preferências de leitura).
+model UserBook {
+  id       String @id @default(uuid())
+  userId   String
+  bookId   String
+
+  status   ReadingStatus @default(WANT_TO_READ)
+  progress Float         @default(0)
+  favorite Boolean       @default(false)
+  rating   Int?
+  priority Priority?
+  color    String?
+
+  lastPage   Int       @default(0)
+  lastReadAt DateTime?
+
+  // preferências de leitura sincronizadas
+  theme     String?
+  viewMode  String?
+  font      String?
+  fontSize  Int?
+  lineHeight Float?
+  zoom      Float?
+  prefs     Json   @default("{}")
+
+  deletedAt DateTime? // soft-delete (lixeira)
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  shelves     UserBookShelf[]
+  collections UserBookCollection[]
+  tags        UserBookTag[]
+  highlights  Highlight[]
+  notes       Note[]
+  bookmarks   Bookmark[]
+  stickers    Sticker[]
+
+  @@unique([userId, bookId])
+  @@index([userId, status])
+}
+
+// ──────────────────────────── Organização ────────────────────────────
+
+model Shelf {
+  id     String  @id @default(uuid())
+  userId String
+  name   String
+  color  String?
+  icon   String?
+
+  user  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  books UserBookShelf[]
+}
+
+model Collection {
+  id          String  @id @default(uuid())
+  userId      String
+  name        String
+  description String?
+
+  user  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  books UserBookCollection[]
+}
+
+model Tag {
+  id     String  @id @default(uuid())
+  userId String
+  name   String
+  color  String?
+
+  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  books UserBookTag[]
+
+  @@unique([userId, name])
+}
+
+model UserBookShelf {
+  userBookId String
+  shelfId    String
+
+  userBook UserBook @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+  shelf    Shelf    @relation(fields: [shelfId], references: [id], onDelete: Cascade)
+
+  @@id([userBookId, shelfId])
+}
+
+model UserBookCollection {
+  userBookId   String
+  collectionId String
+
+  userBook   UserBook   @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@id([userBookId, collectionId])
+}
+
+model UserBookTag {
+  userBookId String
+  tagId      String
+
+  userBook UserBook @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+  tag      Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([userBookId, tagId])
+}
+
+// ──────────────────────────── Marcações ────────────────────────────
+// Âncoras resilientes (textRange/CFI/rects normalizados) em Json — ver ARCHITECTURE §5.
+
+model Highlight {
+  id         String         @id @default(uuid())
+  userBookId String
+  page       Int?
+  color      HighlightColor @default(YELLOW)
+  text       String
+  anchor     Json
+  comment    String?
+  createdAt  DateTime       @default(now())
+
+  userBook UserBook @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+
+  @@index([userBookId])
+}
+
+model Note {
+  id         String   @id @default(uuid())
+  userBookId String
+  page       Int?
+  position   Json? // {x,y} fração da página
+  content    String // markdown
+  color      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  userBook UserBook @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+
+  @@index([userBookId])
+}
+
+model Bookmark {
+  id          String  @id @default(uuid())
+  userBookId  String
+  page        Int
+  title       String?
+  description String?
+  color       String?
+  category    String?
+
+  userBook UserBook @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+
+  @@index([userBookId])
+}
+
+model Sticker {
+  id         String @id @default(uuid())
+  userBookId String
+  page       Int
+  x          Float
+  y          Float
+  rotation   Float  @default(0)
+  scale      Float  @default(1)
+  type       String
+
+  userBook UserBook @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+
+  @@index([userBookId])
+}

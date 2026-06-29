@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+/*
+  CalmBook — tokens de design.
+  Filosofia: calma, foco, papel quente, tinta suave, um único acento discreto.
+  Temas de leitura (Sepia, Nord, Dracula, OLED...) entram como presets na Fase 4.
+*/
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+
+  /* claro — papel quente */
+  --color-paper: oklch(0.985 0.006 85);
+  --color-surface: oklch(1 0 0);
+  --color-ink: oklch(0.28 0.012 65);
+  --color-ink-soft: oklch(0.52 0.012 65);
+  --color-line: oklch(0.92 0.006 85);
+  --color-accent: oklch(0.62 0.07 155); /* sálvia silenciosa */
+  --color-accent-soft: oklch(0.95 0.03 155);
+
+  --radius-card: 1rem;
+  --shadow-calm: 0 1px 2px oklch(0.28 0.01 65 / 0.04), 0 8px 24px oklch(0.28 0.01 65 / 0.06);
+}
+
+/* escuro — noite quente, baixo contraste */
+@layer base {
+  .dark {
+    --color-paper: oklch(0.21 0.01 75);
+    --color-surface: oklch(0.25 0.012 75);
+    --color-ink: oklch(0.92 0.008 85);
+    --color-ink-soft: oklch(0.68 0.01 85);
+    --color-line: oklch(0.32 0.012 75);
+    --color-accent: oklch(0.72 0.08 155);
+    --color-accent-soft: oklch(0.3 0.03 155);
+  }
+
+  html {
+    color-scheme: light dark;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: var(--color-accent-soft);
+  }
+}

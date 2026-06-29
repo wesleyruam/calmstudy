@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: calmbook-postgres
+    environment:
+      POSTGRES_USER: calmbook
+      POSTGRES_PASSWORD: calmbook
+      POSTGRES_DB: calmbook
+    ports:
+      - "5432:5432"
+    volumes:
+      - calmbook-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U calmbook"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: calmbook-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - calmbook-redis:/data
+
+  # Fase 2+: descomente quando entrar storage S3 e busca full-text.
+  # minio:
+  #   image: minio/minio
+  #   command: server /data --console-address ":9001"
+  #   ports: ["9000:9000", "9001:9001"]
+  #   environment:
+  #     MINIO_ROOT_USER: calmbook
+  #     MINIO_ROOT_PASSWORD: calmbook123
+  #   volumes: ["calmbook-minio:/data"]
+  #
+  # meilisearch:
+  #   image: getmeili/meilisearch:v1.11
+  #   ports: ["7700:7700"]
+  #   environment:
+  #     MEILI_MASTER_KEY: calmbook-dev-key
+  #   volumes: ["calmbook-meili:/meili_data"]
+
+volumes:
+  calmbook-pg:
+  calmbook-redis:
+  # calmbook-minio:
+  # calmbook-meili:
