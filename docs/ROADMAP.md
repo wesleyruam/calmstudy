@@ -23,10 +23,11 @@ Documentos de stack, arquitetura, modelo de dados e roadmap. **Você está aqui.
 - ✅ Upload de PDF → `StorageProvider` (FS) → cria Book `PROCESSING` → enfileira job.
 - ✅ Worker: extrai texto, conta páginas, metadata → marca `READY`. (capa/thumbnail: pendente)
 - ✅ Biblioteca: grid de cards + estado vazio + drag&drop + polling até `READY`.
-- ⬜ Leitor de PDF (PDF.js): render, navegação de página, zoom, 1 tema claro/escuro.
-- ⬜ Persistir `lastPage`/`zoom` em `UserBook` (base da sincronização).
+- ✅ Leitor de PDF (PDF.js): render, navegação de página, teclado, zoom.
+- ✅ Persistir `lastPage`/`zoom`/`progress` em `UserBook` (base da sincronização).
 
-**Entregável:** dá pra subir um PDF e ler, com progresso salvo. *(upload ✅ — falta o leitor)*
+**Entregável:** ✅ dá pra subir um PDF e ler, com progresso salvo. *(Fase 1 essencial pronta;
+resta auth opcional + capa/thumbnail)*
 
 ---
 

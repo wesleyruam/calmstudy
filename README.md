@@ -29,11 +29,11 @@ suaves, vidro fosco, sombras discretas.
 `apps/web` (Next.js 15 + Tailwind v4), `apps/worker` (BullMQ), `packages/core` (portas),
 `packages/infra` (adapters), `packages/db` (Prisma + Postgres).
 
-✅ Upload de documento (drag&drop) → armazenamento → fila → worker extrai
-texto/páginas/metadata → biblioteca acende o card. Verificado ponta a ponta.
+✅ Upload (drag&drop) → fila → worker extrai metadata → biblioteca acende o card.
+✅ Leitor de PDF (PDF.js): página, navegação, zoom, progresso salvo (retoma onde parou).
 
-Falta para fechar a Fase 1: **leitor de PDF (PDF.js)** e **auth (Auth.js)**.
-Veja o [roadmap](docs/ROADMAP.md).
+Fase 1 essencial pronta. Próximo: **auth (Auth.js)** e **organização** (prateleiras,
+coleções, tags — Fase 2). Veja o [roadmap](docs/ROADMAP.md).
 
 ## Rodando localmente
 
