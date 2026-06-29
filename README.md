@@ -25,11 +25,14 @@ suaves, vidro fosco, sombras discretas.
 
 ## Status
 
-🏗 **Fase 1 — Fundação montada.** Monorepo (Turborepo + pnpm) rodando: `apps/web`
-(Next.js 15 + Tailwind v4, shell da biblioteca), `apps/worker` (BullMQ), `packages/core`
-(domínio + portas), `packages/db` (Prisma + Postgres). Typecheck e build verdes.
+🏗 **Fase 1 em andamento — pipeline de upload funcionando.** Monorepo (Turborepo + pnpm):
+`apps/web` (Next.js 15 + Tailwind v4), `apps/worker` (BullMQ), `packages/core` (portas),
+`packages/infra` (adapters), `packages/db` (Prisma + Postgres).
 
-Falta para fechar a Fase 1: auth, upload real, processamento no worker e leitor de PDF.
+✅ Upload de documento (drag&drop) → armazenamento → fila → worker extrai
+texto/páginas/metadata → biblioteca acende o card. Verificado ponta a ponta.
+
+Falta para fechar a Fase 1: **leitor de PDF (PDF.js)** e **auth (Auth.js)**.
 Veja o [roadmap](docs/ROADMAP.md).
 
 ## Rodando localmente

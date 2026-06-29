@@ -17,16 +17,16 @@ Documentos de stack, arquitetura, modelo de dados e roadmap. **Você está aqui.
 **Meta:** importar um PDF e lê-lo. Prova o caminho inteiro UI → BFF → core → fila → worker
 → banco → leitor.
 
-- 🟡 Scaffold do monorepo (Turborepo + pnpm): `web`, `worker`, `core`, `db`.
-- 🟢 `docker-compose`: Postgres + Redis. Prisma schema inicial (User, Book, UserBook).
-- 🟡 Auth.js (e-mail/senha) — single-user já serve.
-- 🟡 Upload de PDF → `StorageProvider` (FS) → cria Book `PROCESSING` → enfileira job.
-- 🟡 Worker: extrai texto, conta páginas, gera capa/thumbnail → marca `READY`.
-- 🟡 Biblioteca: grid de cards (capa, título, autor, progresso). Estado vazio bonito.
-- 🔴 Leitor de PDF (PDF.js): render, navegação de página, zoom, 1 tema claro/escuro.
-- 🟢 Persistir `lastPage`/`zoom` em `UserBook` (base da sincronização).
+- ✅ Scaffold do monorepo (Turborepo + pnpm): `web`, `worker`, `core`, `db`, `infra`.
+- ✅ `docker-compose`: Postgres + Redis (portas 5433/6380). Prisma schema + migration.
+- ⬜ Auth.js (e-mail/senha) — por ora usa usuário padrão (`voce@calmbook.local`).
+- ✅ Upload de PDF → `StorageProvider` (FS) → cria Book `PROCESSING` → enfileira job.
+- ✅ Worker: extrai texto, conta páginas, metadata → marca `READY`. (capa/thumbnail: pendente)
+- ✅ Biblioteca: grid de cards + estado vazio + drag&drop + polling até `READY`.
+- ⬜ Leitor de PDF (PDF.js): render, navegação de página, zoom, 1 tema claro/escuro.
+- ⬜ Persistir `lastPage`/`zoom` em `UserBook` (base da sincronização).
 
-**Entregável:** dá pra subir um PDF e ler, com progresso salvo.
+**Entregável:** dá pra subir um PDF e ler, com progresso salvo. *(upload ✅ — falta o leitor)*
 
 ---
 
