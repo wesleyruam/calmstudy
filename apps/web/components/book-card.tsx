@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { LibraryItem } from "@/lib/library";
 
 // Card de livro. Capa real (render da pág. 1) entra depois; por ora, uma capa
@@ -5,8 +6,9 @@ import type { LibraryItem } from "@/lib/library";
 export function BookCard({ item }: { item: LibraryItem }) {
   const processing = item.status === "PROCESSING";
   const failed = item.status === "FAILED";
+  const readable = item.status === "READY";
 
-  return (
+  const inner = (
     <div className="group flex flex-col">
       <div
         className="relative aspect-[3/4] overflow-hidden rounded-[var(--radius-card)] shadow-[var(--shadow-calm)] ring-1 ring-[var(--color-line)] transition-transform duration-300 group-hover:-translate-y-1"
@@ -44,6 +46,15 @@ export function BookCard({ item }: { item: LibraryItem }) {
         </div>
       </div>
     </div>
+  );
+
+  // READY → abre o leitor; senão, card sem link (processando/falhou).
+  return readable ? (
+    <Link href={`/read/${item.userBookId}`} className="block">
+      {inner}
+    </Link>
+  ) : (
+    inner
   );
 }
 

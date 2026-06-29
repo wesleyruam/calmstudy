@@ -1,0 +1,219 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import type { ReaderData } from "@/lib/reader";
+
+// Tipos mínimos do pdf.js (carregado dinamicamente p/ evitar SSR).
+type PdfDoc = { numPages: number; getPage: (n: number) => Promise<PdfPage> };
+type PdfPage = {
+  getViewport: (o: { scale: number }) => PdfViewport;
+  render: (o: { canvasContext: CanvasRenderingContext2D; viewport: PdfViewport }) => {
+    promise: Promise<void>;
+    cancel: () => void;
+  };
+};
+type PdfViewport = { width: number; height: number };
+
+const MIN_SCALE = 0.5;
+const MAX_SCALE = 3;
+
+export function PdfReader({ data }: { data: ReaderData }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const docRef = useRef<PdfDoc | null>(null);
+  const renderTaskRef = useRef<{ cancel: () => void } | null>(null);
+
+  const [numPages, setNumPages] = useState(data.pages ?? 0);
+  const [page, setPage] = useState(Math.max(1, data.lastPage || 1));
+  const [scale, setScale] = useState(data.zoom ?? 1.2);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Carrega o documento uma vez.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const pdfjs = await import("pdfjs-dist");
+        pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+          "pdfjs-dist/build/pdf.worker.min.mjs",
+          import.meta.url,
+        ).toString();
+        const doc = (await pdfjs.getDocument({ url: data.fileUrl }).promise) as unknown as PdfDoc;
+        if (cancelled) return;
+        docRef.current = doc;
+        setNumPages(doc.numPages);
+        setPage((p) => Math.min(Math.max(1, p), doc.numPages));
+        setLoading(false);
+      } catch (e) {
+        if (!cancelled) {
+          setError("Não foi possível abrir o PDF.");
+          setLoading(false);
+          console.error(e);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [data.fileUrl]);
+
+  // Renderiza a página atual sempre que page/scale muda.
+  useEffect(() => {
+    const doc = docRef.current;
+    const canvas = canvasRef.current;
+    if (!doc || !canvas) return;
+
+    let active = true;
+    (async () => {
+      const pdfPage = await doc.getPage(page);
+      if (!active) return;
+
+      const dpr = window.devicePixelRatio || 1;
+      const viewport = pdfPage.getViewport({ scale });
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      canvas.width = Math.floor(viewport.width * dpr);
+      canvas.height = Math.floor(viewport.height * dpr);
+      canvas.style.width = `${Math.floor(viewport.width)}px`;
+      canvas.style.height = `${Math.floor(viewport.height)}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      renderTaskRef.current?.cancel();
+      const task = pdfPage.render({ canvasContext: ctx, viewport });
+      renderTaskRef.current = task;
+      try {
+        await task.promise;
+      } catch {
+        // render cancelado por troca rápida de página — ok
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [page, scale, loading]);
+
+  // Persiste página/zoom (debounced).
+  useEffect(() => {
+    if (loading || !numPages) return;
+    const t = setTimeout(() => {
+      void fetch(`/api/userbooks/${data.userBookId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lastPage: page,
+          zoom: scale,
+          progress: numPages ? page / numPages : 0,
+          status: "READING",
+        }),
+      }).catch(() => {});
+    }, 800);
+    return () => clearTimeout(t);
+  }, [page, scale, numPages, loading, data.userBookId]);
+
+  const go = useCallback(
+    (delta: number) => setPage((p) => Math.min(Math.max(1, p + delta), numPages || 1)),
+    [numPages],
+  );
+
+  // Navegação por teclado.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight" || e.key === "PageDown") go(1);
+      if (e.key === "ArrowLeft" || e.key === "PageUp") go(-1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [go]);
+
+  const zoom = (d: number) =>
+    setScale((s) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, Math.round((s + d) * 10) / 10)));
+
+  return (
+    <div className="flex min-h-dvh flex-col bg-[var(--color-paper)]">
+      {/* barra superior */}
+      <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-[var(--color-line)] bg-[var(--color-paper)]/80 px-4 backdrop-blur-xl">
+        <Link
+          href="/"
+          className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60"
+        >
+          ← Biblioteca
+        </Link>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{data.title}</p>
+          {data.author && (
+            <p className="truncate text-xs text-[var(--color-ink-soft)]">{data.author}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-1 text-sm text-[var(--color-ink-soft)]">
+          <button
+            onClick={() => zoom(-0.2)}
+            className="grid size-8 place-items-center rounded-full hover:bg-[var(--color-line)]/60"
+            aria-label="Diminuir zoom"
+          >
+            −
+          </button>
+          <span className="w-12 text-center tabular-nums">{Math.round(scale * 100)}%</span>
+          <button
+            onClick={() => zoom(0.2)}
+            className="grid size-8 place-items-center rounded-full hover:bg-[var(--color-line)]/60"
+            aria-label="Aumentar zoom"
+          >
+            +
+          </button>
+        </div>
+      </header>
+
+      {/* área da página */}
+      <div className="flex flex-1 justify-center overflow-auto px-4 py-8">
+        {error ? (
+          <p className="mt-20 text-sm text-[var(--color-ink-soft)]">{error}</p>
+        ) : loading ? (
+          <p className="mt-20 animate-pulse text-sm text-[var(--color-ink-soft)]">
+            Abrindo documento…
+          </p>
+        ) : (
+          <canvas
+            ref={canvasRef}
+            className="h-fit rounded-md shadow-[var(--shadow-calm)] ring-1 ring-[var(--color-line)]"
+          />
+        )}
+      </div>
+
+      {/* navegação inferior */}
+      <footer className="sticky bottom-0 z-10 flex h-16 items-center justify-center gap-6 border-t border-[var(--color-line)] bg-[var(--color-paper)]/80 backdrop-blur-xl">
+        <NavBtn onClick={() => go(-1)} disabled={page <= 1}>
+          ← Anterior
+        </NavBtn>
+        <span className="min-w-28 text-center text-sm tabular-nums text-[var(--color-ink-soft)]">
+          Página {page} / {numPages || "…"}
+        </span>
+        <NavBtn onClick={() => go(1)} disabled={!!numPages && page >= numPages}>
+          Próxima →
+        </NavBtn>
+      </footer>
+    </div>
+  );
+}
+
+function NavBtn({
+  children,
+  onClick,
+  disabled,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm transition-colors hover:bg-[var(--color-line)]/40 disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      {children}
+    </button>
+  );
+}
