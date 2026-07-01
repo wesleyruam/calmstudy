@@ -34,14 +34,15 @@ resta auth opcional + capa/thumbnail)*
 ## Fase 2 — Identidade visual + organização 🟡
 **Meta:** parecer e funcionar como CalmBook — calmo, organizado.
 
-- 🟡 Design system: Navbar (logo, busca, upload, tema, perfil) + Sidebar completa.
-- 🟡 Tema claro/escuro polido, vidro fosco, blur, transições (Framer Motion).
-- 🟡 Prateleiras + Coleções + Tags (CRUD, N:N, arrastar livro pra prateleira).
-- 🟡 CRUD completo do livro (editar metadata manual, capa, cor, prioridade, avaliação).
-- 🟢 Filtros da sidebar: Continue Lendo, Favoritos, Em Leitura, Concluídos, Recentes.
-- 🟢 Busca global Fase 1 (Postgres FTS: livro, autor, tag, nota).
+- 🟡 Design system: Navbar + Sidebar ✅ (busca/perfil ainda estáticos).
+- ✅ Tema claro/escuro (toggle + anti-flash). Transições Framer Motion: pendente.
+- 🟡 Prateleiras ✅ (CRUD + N:N + atribuir + filtrar). Coleções e Tags: pendente.
+- ⬜ CRUD completo do livro (editar metadata manual, capa, cor, prioridade, avaliação).
+- ✅ Filtros da sidebar: Favoritos, Em Leitura, Concluídos, Importados.
+- ⬜ Busca global Fase 1 (Postgres FTS: livro, autor, tag, nota).
 
-**Entregável:** biblioteca organizável e agradável de navegar.
+**Entregável:** biblioteca organizável e agradável de navegar. *(prateleiras + filtros +
+tema ✅; faltam coleções/tags, busca e CRUD de metadata)*
 
 ---
 
