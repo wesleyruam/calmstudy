@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@calmbook/db";
+import type { Prisma } from "@calmbook/db";
 import { getOrCreateDefaultUser } from "@calmbook/infra";
 
 export interface LibraryItem {
@@ -13,14 +14,57 @@ export interface LibraryItem {
   progress: number;
   favorite: boolean;
   rating: number | null;
+  shelfIds: string[];
 }
 
-/** Itens da biblioteca do usuário (foco single-user até a auth entrar). */
-export async function getLibrary(): Promise<LibraryItem[]> {
+export type LibraryFilter =
+  | "all"
+  | "reading"
+  | "finished"
+  | "favorites"
+  | "recent";
+
+export const FILTER_LABELS: Record<LibraryFilter, string> = {
+  all: "Biblioteca",
+  reading: "Em Leitura",
+  finished: "Concluídos",
+  favorites: "Favoritos",
+  recent: "Importados Recentemente",
+};
+
+function whereFor(userId: string, filter: LibraryFilter, shelfId?: string): Prisma.UserBookWhereInput {
+  const base: Prisma.UserBookWhereInput = { userId, deletedAt: null };
+  if (shelfId) base.shelves = { some: { shelfId } };
+  switch (filter) {
+    case "reading":
+      base.status = "READING";
+      break;
+    case "finished":
+      base.status = "FINISHED";
+      break;
+    case "favorites":
+      base.favorite = true;
+      break;
+    case "recent": {
+      const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+      base.createdAt = { gte: since };
+      break;
+    }
+    case "all":
+      break;
+  }
+  return base;
+}
+
+/** Itens da biblioteca do usuário, com filtro/prateleira (foco single-user até a auth). */
+export async function getLibrary(
+  filter: LibraryFilter = "all",
+  shelfId?: string,
+): Promise<LibraryItem[]> {
   const user = await getOrCreateDefaultUser();
   const items = await prisma.userBook.findMany({
-    where: { userId: user.id, deletedAt: null },
-    include: { book: true },
+    where: whereFor(user.id, filter, shelfId),
+    include: { book: true, shelves: { select: { shelfId: true } } },
     orderBy: { createdAt: "desc" },
   });
 
@@ -35,5 +79,6 @@ export async function getLibrary(): Promise<LibraryItem[]> {
     progress: ub.progress,
     favorite: ub.favorite,
     rating: ub.rating,
+    shelfIds: ub.shelves.map((s) => s.shelfId),
   }));
 }

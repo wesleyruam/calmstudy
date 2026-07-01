@@ -10,6 +10,8 @@ const PatchSchema = z.object({
   progress: z.number().min(0).max(1).optional(),
   zoom: z.number().min(0.1).max(8).optional(),
   status: z.enum(["WANT_TO_READ", "READING", "FINISHED", "PAUSED"]).optional(),
+  favorite: z.boolean().optional(),
+  rating: z.number().int().min(0).max(5).optional(),
 });
 
 // Atualiza o estado de leitura do usuário (página atual, progresso, zoom).
@@ -24,10 +26,14 @@ export async function PATCH(
     return NextResponse.json({ error: "Payload inválido." }, { status: 400 });
   }
 
+  // lastReadAt só avança em ações de leitura (não em favoritar/avaliar).
+  const touchedReading =
+    parsed.data.lastPage !== undefined || parsed.data.progress !== undefined;
+
   const user = await getOrCreateDefaultUser();
   const result = await prisma.userBook.updateMany({
     where: { id, userId: user.id },
-    data: { ...parsed.data, lastReadAt: new Date() },
+    data: { ...parsed.data, ...(touchedReading ? { lastReadAt: new Date() } : {}) },
   });
 
   if (result.count === 0) {

@@ -1,9 +1,10 @@
 import Link from "next/link";
 import type { LibraryItem } from "@/lib/library";
+import { CardActions, type ShelfOption } from "@/components/card-actions";
 
 // Card de livro. Capa real (render da pág. 1) entra depois; por ora, uma capa
 // gerada determinística a partir do título — calma e sem ruído visual.
-export function BookCard({ item }: { item: LibraryItem }) {
+export function BookCard({ item, shelves }: { item: LibraryItem; shelves: ShelfOption[] }) {
   const processing = item.status === "PROCESSING";
   const failed = item.status === "FAILED";
   const readable = item.status === "READY";
@@ -29,6 +30,15 @@ export function BookCard({ item }: { item: LibraryItem }) {
               {processing ? "Processando…" : "Falhou"}
             </span>
           </div>
+        )}
+
+        {readable && (
+          <CardActions
+            userBookId={item.userBookId}
+            initialFavorite={item.favorite}
+            initialShelfIds={item.shelfIds}
+            shelves={shelves}
+          />
         )}
       </div>
 
