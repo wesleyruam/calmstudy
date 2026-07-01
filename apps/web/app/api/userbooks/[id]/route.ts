@@ -12,6 +12,7 @@ const PatchSchema = z.object({
   status: z.enum(["WANT_TO_READ", "READING", "FINISHED", "PAUSED"]).optional(),
   favorite: z.boolean().optional(),
   rating: z.number().int().min(0).max(5).optional(),
+  viewMode: z.string().max(20).optional(),
 });
 
 // Atualiza o estado de leitura do usuário (página atual, progresso, zoom).

@@ -41,6 +41,9 @@ importers:
       next:
         specifier: ^15.1.2
         version: 15.5.19(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      page-flip:
+        specifier: ^2.0.7
+        version: 2.0.7
       pdfjs-dist:
         specifier: ^4.10.38
         version: 4.10.38
@@ -1283,6 +1286,9 @@ packages:
   once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
 
+  page-flip@2.0.7:
+    resolution: {integrity: sha512-96lQFUUz7r/LZzEUZJ3yBIMEKU9+m8HMFDzTvTdD6P7Ag/wXINjp9n0W7b4wanwnDbQETo4uNUoL3zMqpFxwGA==}
+
   path-is-absolute@1.0.1:
     resolution: {integrity: sha512-AVbw3UJ2e9bq64vSaS9Am0fje1Pa8pbGqTTsmXfaIiMpnr5DlDhfJOuLj9Sf95ZPVDAUerDfEk88MPmPe7UCQg==}
     engines: {node: '>=0.10.0'}
@@ -2448,6 +2454,8 @@ snapshots:
     dependencies:
       wrappy: 1.0.2
     optional: true
+
+  page-flip@2.0.7: {}
 
   path-is-absolute@1.0.1:
     optional: true

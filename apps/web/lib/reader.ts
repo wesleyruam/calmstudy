@@ -11,6 +11,7 @@ export interface ReaderData {
   pages: number | null;
   lastPage: number;
   zoom: number | null;
+  viewMode: string | null;
 }
 
 /** Dados para abrir um documento no leitor — só do dono (foco single-user até a auth). */
@@ -31,5 +32,6 @@ export async function getReaderData(userBookId: string): Promise<ReaderData | nu
     pages: ub.book.pages,
     lastPage: ub.lastPage,
     zoom: ub.zoom,
+    viewMode: ub.viewMode,
   };
 }
