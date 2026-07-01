@@ -118,8 +118,17 @@ export const BookView = forwardRef<BookHandle, BookViewProps>(function BookView(
       flipRef.current = pageFlip;
       flip = pageFlip;
 
+      // Pré-renderiza uma janela AMPLA à frente para que o próximo spread (as duas
+      // páginas, principalmente a da direita) já esteja pronto ANTES da virada —
+      // o evento "flip" dispara só no fim da animação, então não dá pra depender dele.
+      const AHEAD = 5; // cobre o spread atual + o próximo inteiro + folga
+      const BEHIND = 3;
       const renderWindow = async (center: number) => {
-        for (let i = center - 1; i <= center + 2; i++) {
+        // ordem: spread atual e à frente primeiro (o que aparece ao virar), depois trás
+        const order: number[] = [];
+        for (let i = 0; i <= AHEAD; i++) order.push(center + i);
+        for (let i = 1; i <= BEHIND; i++) order.push(center - i);
+        for (const i of order) {
           if (i < 0 || i >= numPages || rendered.has(i)) continue;
           rendered.add(i);
           await renderPage(canvases[i]!, i);
