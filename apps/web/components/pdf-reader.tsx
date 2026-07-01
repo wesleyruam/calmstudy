@@ -28,6 +28,18 @@ export function PdfReader({ data }: { data: ReaderData }) {
   const [scale, setScale] = useState(data.zoom ?? 1.2);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dark, setDark] = useState(false);
+
+  // Acompanha o tema (classe .dark no <html>) para inverter o PDF no modo escuro,
+  // fazendo a página se fundir com o fundo do leitor.
+  useEffect(() => {
+    const el = document.documentElement;
+    const sync = () => setDark(el.classList.contains("dark"));
+    sync();
+    const obs = new MutationObserver(sync);
+    obs.observe(el, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
 
   // Carrega o documento uma vez.
   useEffect(() => {
@@ -177,7 +189,14 @@ export function PdfReader({ data }: { data: ReaderData }) {
         ) : (
           <canvas
             ref={canvasRef}
-            className="h-fit rounded-md shadow-[var(--shadow-calm)] ring-1 ring-[var(--color-line)]"
+            className={[
+              "h-fit rounded-md transition-[filter]",
+              // no modo escuro, inverte suave p/ o PDF combinar com o fundo do leitor;
+              // no claro, mantém a folha branca com sombra/borda discretas.
+              dark
+                ? "[filter:invert(0.9)_hue-rotate(180deg)]"
+                : "shadow-[var(--shadow-calm)] ring-1 ring-[var(--color-line)]",
+            ].join(" ")}
           />
         )}
       </div>
