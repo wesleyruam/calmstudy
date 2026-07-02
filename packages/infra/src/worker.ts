@@ -1,2 +1,3 @@
-// Entrada "pesada" do infra — parsers de documento (unpdf/pdfjs). SÓ no worker.
+// Entrada "pesada" do infra — parsers de documento (unpdf/pdfjs) e capa. SÓ no worker.
 export { PdfParser, parserFor } from "./parser/index.js";
+export { renderCover } from "./parser/cover.js";

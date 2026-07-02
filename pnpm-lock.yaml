@@ -150,6 +150,9 @@ importers:
       '@calmbook/db':
         specifier: workspace:*
         version: link:../db
+      '@napi-rs/canvas':
+        specifier: ^0.1.100
+        version: 0.1.100
       bullmq:
         specifier: ^5.34.0
         version: 5.79.2
@@ -1811,7 +1814,6 @@ snapshots:
       '@napi-rs/canvas-linux-x64-musl': 0.1.100
       '@napi-rs/canvas-win32-arm64-msvc': 0.1.100
       '@napi-rs/canvas-win32-x64-msvc': 0.1.100
-    optional: true
 
   '@next/env@15.5.19': {}
 

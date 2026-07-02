@@ -20,4 +20,6 @@ export interface ProcessDocumentJob {
   bookId: string;
   fileKey: string;
   format: string;
+  /** Só (re)gera a capa, sem reprocessar texto/metadata — usado no backfill. */
+  coverOnly?: boolean;
 }

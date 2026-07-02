@@ -15,6 +15,7 @@
   "dependencies": {
     "@calmbook/core": "workspace:*",
     "@calmbook/db": "workspace:*",
+    "@napi-rs/canvas": "^0.1.100",
     "bullmq": "^5.34.0",
     "ioredis": "^5.11.1",
     "unpdf": "^0.12.1"

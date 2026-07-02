@@ -11,6 +11,9 @@ const CONTENT_TYPES: Record<string, string> = {
   txt: "text/plain; charset=utf-8",
   md: "text/markdown; charset=utf-8",
   html: "text/html; charset=utf-8",
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
 };
 
 // Serve o arquivo armazenado. Dev: lê do filesystem. Prod: redirect p/ URL S3 assinada.

@@ -15,11 +15,22 @@ export function BookCard({ item, shelves }: { item: LibraryItem; shelves: ShelfO
         className="relative aspect-[3/4] overflow-hidden rounded-[var(--radius-card)] shadow-[var(--shadow-calm)] ring-1 ring-[var(--color-line)] transition-transform duration-300 group-hover:-translate-y-1"
         style={{ background: coverGradient(item.title) }}
       >
-        <div className="absolute inset-0 flex items-end p-4">
-          <span className="font-serif text-lg leading-tight text-white/95 drop-shadow-sm">
-            {item.title}
-          </span>
-        </div>
+        {item.coverUrl ? (
+          // capa real (render da 1ª página); object-cover preenche o card
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={item.coverUrl}
+            alt={item.title}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-end p-4">
+            <span className="font-serif text-lg leading-tight text-white/95 drop-shadow-sm">
+              {item.title}
+            </span>
+          </div>
+        )}
         <span className="absolute right-2 top-2 rounded-md bg-black/25 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/90 backdrop-blur-sm">
           {item.format}
         </span>
@@ -35,6 +46,8 @@ export function BookCard({ item, shelves }: { item: LibraryItem; shelves: ShelfO
         {readable && (
           <CardActions
             userBookId={item.userBookId}
+            bookId={item.bookId}
+            title={item.title}
             initialFavorite={item.favorite}
             initialShelfIds={item.shelfIds}
             shelves={shelves}

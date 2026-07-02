@@ -15,6 +15,7 @@ export interface LibraryItem {
   favorite: boolean;
   rating: number | null;
   shelfIds: string[];
+  coverUrl: string | null;
 }
 
 export type LibraryFilter =
@@ -80,5 +81,6 @@ export async function getLibrary(
     favorite: ub.favorite,
     rating: ub.rating,
     shelfIds: ub.shelves.map((s) => s.shelfId),
+    coverUrl: ub.book.coverUrl,
   }));
 }
