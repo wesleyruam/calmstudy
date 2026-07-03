@@ -5,6 +5,10 @@ import Link from "next/link";
 import type { ReaderData } from "@/lib/reader";
 import type { PdfDoc } from "@/components/pdf-types";
 import { BookView, type BookHandle } from "@/components/book-view";
+import { PdfPageView, type NewHighlight } from "@/components/pdf-page";
+import { HighlightPanel } from "@/components/highlight-panel";
+import { HighlightNotes } from "@/components/highlight-notes";
+import type { HighlightDTO } from "@/lib/highlight-shared";
 
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3;
@@ -12,8 +16,6 @@ const MAX_SCALE = 3;
 type Mode = "single" | "book";
 
 export function PdfReader({ data }: { data: ReaderData }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const renderTaskRef = useRef<{ cancel: () => void } | null>(null);
   const bookRef = useRef<BookHandle>(null);
 
   const [doc, setDoc] = useState<PdfDoc | null>(null);
@@ -24,6 +26,8 @@ export function PdfReader({ data }: { data: ReaderData }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dark, setDark] = useState(false);
+  const [highlights, setHighlights] = useState<HighlightDTO[]>([]);
+  const [activeHighlight, setActiveHighlight] = useState<HighlightDTO | null>(null);
 
   // Acompanha o tema (classe .dark no <html>) para inverter o PDF no modo escuro,
   // fazendo a página se fundir com o fundo do leitor.
@@ -65,37 +69,44 @@ export function PdfReader({ data }: { data: ReaderData }) {
     };
   }, [data.fileUrl]);
 
-  // Modo página única: renderiza a página atual sempre que page/scale muda.
+  // Carrega os destaques do livro (para renderizar como overlay no leitor).
   useEffect(() => {
-    if (mode !== "single" || !doc) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    let active = true;
-    (async () => {
-      const pdfPage = await doc.getPage(page);
-      if (!active) return;
-      const dpr = window.devicePixelRatio || 1;
-      const viewport = pdfPage.getViewport({ scale });
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      canvas.width = Math.floor(viewport.width * dpr);
-      canvas.height = Math.floor(viewport.height * dpr);
-      canvas.style.width = `${Math.floor(viewport.width)}px`;
-      canvas.style.height = `${Math.floor(viewport.height)}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-      renderTaskRef.current?.cancel();
-      const task = pdfPage.render({ canvasContext: ctx, viewport });
-      renderTaskRef.current = task;
-      await task.promise.catch(() => {});
-    })();
-
+    let cancelled = false;
+    fetch(`/api/userbooks/${data.userBookId}/highlights`)
+      .then((r) => (r.ok ? r.json() : { highlights: [] }))
+      .then((d) => {
+        if (!cancelled) setHighlights(d.highlights ?? []);
+      })
+      .catch(() => {});
     return () => {
-      active = false;
+      cancelled = true;
     };
-  }, [doc, page, scale, mode]);
+  }, [data.userBookId]);
+
+  const createHighlight = useCallback(
+    async (h: NewHighlight) => {
+      const res = await fetch(`/api/userbooks/${data.userBookId}/highlights`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(h),
+      });
+      if (!res.ok) return;
+      const { highlight } = await res.json();
+      setHighlights((prev) => [...prev, highlight]);
+      setActiveHighlight(highlight);
+    },
+    [data.userBookId],
+  );
+
+  const updateHighlight = useCallback((h: HighlightDTO) => {
+    setHighlights((prev) => prev.map((x) => (x.id === h.id ? h : x)));
+    setActiveHighlight((cur) => (cur?.id === h.id ? h : cur));
+  }, []);
+
+  const deleteHighlight = useCallback((id: string) => {
+    setHighlights((prev) => prev.filter((x) => x.id !== id));
+    setActiveHighlight((cur) => (cur?.id === id ? null : cur));
+  }, []);
 
   // Persiste página/zoom/modo (debounced).
   useEffect(() => {
@@ -178,34 +189,49 @@ export function PdfReader({ data }: { data: ReaderData }) {
         </div>
       </header>
 
-      {/* área de leitura */}
-      <div className="flex flex-1 justify-center overflow-auto px-4 py-8">
-        {error ? (
-          <p className="mt-20 text-sm text-[var(--color-ink-soft)]">{error}</p>
-        ) : loading || !doc ? (
-          <p className="mt-20 animate-pulse text-sm text-[var(--color-ink-soft)]">
-            Abrindo documento…
-          </p>
-        ) : mode === "book" ? (
-          <BookView
-            ref={bookRef}
-            doc={doc}
-            numPages={numPages}
-            scale={scale}
-            dark={dark}
-            initialPage={page}
-            onPage={setPage}
-          />
-        ) : (
-          <canvas
-            ref={canvasRef}
-            className={[
-              "h-fit rounded-md transition-[filter]",
-              dark
-                ? "[filter:invert(0.9)_hue-rotate(180deg)]"
-                : "shadow-[var(--shadow-calm)] ring-1 ring-[var(--color-line)]",
-            ].join(" ")}
-          />
+      {/* área de leitura + painel de anotação */}
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 justify-center overflow-auto px-4 py-8">
+          {error ? (
+            <p className="mt-20 text-sm text-[var(--color-ink-soft)]">{error}</p>
+          ) : loading || !doc ? (
+            <p className="mt-20 animate-pulse text-sm text-[var(--color-ink-soft)]">
+              Abrindo documento…
+            </p>
+          ) : mode === "book" ? (
+            <BookView
+              ref={bookRef}
+              doc={doc}
+              numPages={numPages}
+              scale={scale}
+              dark={dark}
+              initialPage={page}
+              onPage={setPage}
+            />
+          ) : (
+            <PdfPageView
+              doc={doc}
+              page={page}
+              scale={scale}
+              dark={dark}
+              highlights={highlights}
+              activeId={activeHighlight?.id ?? null}
+              onCreate={createHighlight}
+              onOpen={setActiveHighlight}
+            />
+          )}
+        </div>
+
+        {activeHighlight && (
+          <HighlightPanel
+            key={activeHighlight.id}
+            highlight={activeHighlight}
+            onUpdate={updateHighlight}
+            onDelete={deleteHighlight}
+            onClose={() => setActiveHighlight(null)}
+          >
+            <HighlightNotes highlightId={activeHighlight.id} />
+          </HighlightPanel>
         )}
       </div>
 

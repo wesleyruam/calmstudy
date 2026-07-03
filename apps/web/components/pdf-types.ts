@@ -3,8 +3,15 @@ export interface PdfViewport {
   width: number;
   height: number;
 }
+/** Conteúdo de texto de uma página (itens posicionados) — usado pela TextLayer. */
+export interface PdfTextContent {
+  items: unknown[];
+  styles?: Record<string, unknown>;
+}
+
 export interface PdfPage {
   getViewport: (o: { scale: number }) => PdfViewport;
+  getTextContent: () => Promise<PdfTextContent>;
   render: (o: {
     canvasContext: CanvasRenderingContext2D;
     viewport: PdfViewport;

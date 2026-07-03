@@ -50,3 +50,188 @@
     background-color: var(--color-accent-soft);
   }
 }
+
+/*
+  Camada de texto do PDF.js (seleção transparente sobre o canvas).
+  Baseado no text_layer_builder do pdf.js; posições vêm da TextLayer.
+*/
+.textLayer {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  opacity: 1;
+  line-height: 1;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  z-index: 2;
+  caret-color: var(--color-ink);
+}
+
+.textLayer span,
+.textLayer br {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+
+.textLayer span.markedContent {
+  top: 0;
+  height: 0;
+}
+
+/*
+  Páginas com /Rotate: a TextLayer dimensiona pelo viewBox (não-rotacionado) e
+  marca data-main-rotation; aplicamos a transform que sobrepõe ao canvas.
+*/
+.textLayer[data-main-rotation="90"] {
+  transform: rotate(90deg) translateY(-100%);
+}
+.textLayer[data-main-rotation="180"] {
+  transform: rotate(180deg) translate(-100%, -100%);
+}
+.textLayer[data-main-rotation="270"] {
+  transform: rotate(270deg) translateX(-100%);
+}
+
+.textLayer ::selection {
+  background: color-mix(in srgb, var(--color-accent) 45%, transparent);
+}
+
+/* Camada de destaques salvos: acima do texto para serem clicáveis; o container
+   não captura eventos (pointer-events: none) — só os retângulos .hl capturam,
+   deixando a seleção de texto passar pelas áreas vazias. */
+.highlightLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.highlightLayer .hl {
+  position: absolute;
+  border-radius: 2px;
+  pointer-events: auto;
+  cursor: pointer;
+  mix-blend-mode: multiply;
+  transition:
+    outline-color 0.15s ease,
+    filter 0.15s ease;
+  outline: 2px solid transparent;
+}
+
+.highlightLayer .hl:hover {
+  filter: brightness(0.95);
+}
+
+.highlightLayer .hl[data-active="true"] {
+  outline-color: var(--color-ink);
+}
+
+/* No escuro o canvas é invertido; o multiply some. Usa screen para aparecer. */
+.dark .highlightLayer .hl {
+  mix-blend-mode: screen;
+}
+
+/* ── Editor Rich Text (TipTap / ProseMirror) ── */
+.rte-content {
+  min-height: 6rem;
+  max-height: 22rem;
+  overflow-y: auto;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.rte-content:focus {
+  outline: none;
+}
+.rte-content > * + * {
+  margin-top: 0.5rem;
+}
+.rte-content h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.rte-content h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.rte-content h3 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+.rte-content ul,
+.rte-content ol {
+  padding-left: 1.25rem;
+}
+.rte-content ul {
+  list-style: disc;
+}
+.rte-content ol {
+  list-style: decimal;
+}
+.rte-content a {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+.rte-content blockquote {
+  border-left: 3px solid var(--color-line);
+  padding-left: 0.75rem;
+  color: var(--color-ink-soft);
+}
+.rte-content code {
+  background: var(--color-line);
+  border-radius: 4px;
+  padding: 0.05rem 0.3rem;
+  font-size: 0.85em;
+}
+.rte-content pre {
+  background: var(--color-line);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  overflow-x: auto;
+}
+.rte-content pre code {
+  background: none;
+  padding: 0;
+}
+.rte-content ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0.25rem;
+}
+.rte-content ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.rte-content ul[data-type="taskList"] li > label {
+  margin-top: 0.15rem;
+}
+.rte-content table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+}
+.rte-content th,
+.rte-content td {
+  border: 1px solid var(--color-line);
+  padding: 0.3rem 0.5rem;
+  text-align: left;
+}
+.rte-content th {
+  background: var(--color-line);
+  font-weight: 600;
+}
+.rte-content img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+.rte-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--color-ink-soft);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

@@ -45,13 +45,26 @@ enum Priority {
   HIGH
 }
 
-enum HighlightColor {
-  YELLOW
-  GREEN
-  BLUE
-  PURPLE
-  RED
-  ORANGE
+// Categorias de estudo (módulo 1). Cada uma tem uma cor padrão no cliente;
+// Highlight.color pode sobrescrever com um hex personalizado.
+enum HighlightCategory {
+  IMPORTANT // 🟨 Importante
+  DEFINITION // 🟩 Definição
+  EXAMPLE // 🟦 Exemplo
+  QUESTION // 🟥 Dúvida
+  REVIEW // 🟪 Revisar
+  EXERCISE // 🟧 Exercício
+  QUOTE // ⚪ Citação
+  IDEA // 🔵 Ideia
+  APPLICATION // 🟫 Aplicação prática
+}
+
+// Status de revisão de um destaque/nota (módulos 13 e 24).
+enum ReviewStatus {
+  NONE
+  PENDING
+  REVIEWED
+  MASTERED
 }
 
 // ───────────────────────────── Núcleo ─────────────────────────────
@@ -69,6 +82,7 @@ model User {
   shelves     Shelf[]
   collections Collection[]
   tags        Tag[]
+  notes       Note[]
 }
 
 // O documento em si (fato objetivo, deduplicável entre usuários).
@@ -160,14 +174,17 @@ model Collection {
   books UserBookCollection[]
 }
 
+// Tag universal (módulo 6): serve qualquer entidade via junções dedicadas.
 model Tag {
   id     String  @id @default(uuid())
   userId String
   name   String
   color  String?
 
-  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  books UserBookTag[]
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  books      UserBookTag[]
+  highlights HighlightTag[]
+  notes      NoteTag[]
 
   @@unique([userId, name])
 }
@@ -205,34 +222,80 @@ model UserBookTag {
 // ──────────────────────────── Marcações ────────────────────────────
 // Âncoras resilientes (textRange/CFI/rects normalizados) em Json — ver ARCHITECTURE §5.
 
+// Highlight rico (módulo 1): cada destaque é uma entidade de estudo.
 model Highlight {
-  id         String         @id @default(uuid())
-  userBookId String
-  page       Int?
-  color      HighlightColor @default(YELLOW)
-  text       String
-  anchor     Json
-  comment    String?
-  createdAt  DateTime       @default(now())
+  id           String            @id @default(uuid())
+  userBookId   String
+  page         Int?
+  chapter      String? // capítulo/seção, quando conhecido
+  category     HighlightCategory @default(IMPORTANT)
+  color        String? // hex personalizado; null = cor da categoria
+  text         String // trecho destacado
+  observation  String? // observação rápida (módulo 1)
+  anchor       Json // âncora resiliente: page + rects normalizados
+  priority     Priority?
+  favorite     Boolean           @default(false)
+  reviewStatus ReviewStatus      @default(NONE)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
-  userBook UserBook @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+  userBook UserBook       @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+  notes    Note[]
+  tags     HighlightTag[]
 
   @@index([userBookId])
+  @@index([userBookId, category])
+  @@index([userBookId, reviewStatus])
 }
 
+// Nota Rich Text (módulo 2) — corpo em JSON (TipTap). Pode estar:
+//  - ancorada a um highlight (highlightId),
+//  - ligada a um livro sem highlight (userBookId, ex. resumo/marginalia),
+//  - ou solta como página livre do usuário (isFreePage, módulo 5).
 model Note {
-  id         String   @id @default(uuid())
-  userBookId String
-  page       Int?
-  position   Json? // {x,y} fração da página
-  content    String // markdown
-  color      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String   @id @default(uuid())
+  userId      String
+  userBookId  String?
+  highlightId String?
+  page        Int?
+  position    Json? // {x,y} fração da página (marginalia)
+  title       String?
+  content     Json     @default("{}") // documento TipTap (JSON)
+  contentText String? // projeção texto puro p/ busca (FTS)
+  isFreePage  Boolean  @default(false)
+  favorite    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  userBook UserBook @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userBook  UserBook?  @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+  highlight Highlight? @relation(fields: [highlightId], references: [id], onDelete: Cascade)
+  tags      NoteTag[]
 
+  @@index([userId])
   @@index([userBookId])
+  @@index([highlightId])
+}
+
+// ── Junções de tag (módulo 6) ──
+model HighlightTag {
+  highlightId String
+  tagId       String
+
+  highlight Highlight @relation(fields: [highlightId], references: [id], onDelete: Cascade)
+  tag       Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([highlightId, tagId])
+}
+
+model NoteTag {
+  noteId String
+  tagId  String
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([noteId, tagId])
 }
 
 model Bookmark {
