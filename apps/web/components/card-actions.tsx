@@ -126,6 +126,14 @@ export function CardActions({
             className="absolute bottom-9 right-0 z-10 w-52 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-1 text-sm shadow-[var(--shadow-calm)]"
             onClick={stop}
           >
+            <MenuItem
+              onClick={(e) => {
+                e.preventDefault();
+                router.push(`/caderno/${userBookId}`);
+              }}
+            >
+              📓 Caderno
+            </MenuItem>
             <MenuItem onClick={rename}>✏️ Renomear</MenuItem>
 
             {shelves.length > 0 && (

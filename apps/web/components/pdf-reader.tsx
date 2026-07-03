@@ -8,6 +8,7 @@ import { BookView, type BookHandle } from "@/components/book-view";
 import { PdfPageView, type NewHighlight } from "@/components/pdf-page";
 import { HighlightPanel } from "@/components/highlight-panel";
 import { HighlightNotes } from "@/components/highlight-notes";
+import { BookmarksControl } from "@/components/bookmarks-control";
 import type { HighlightDTO } from "@/lib/highlight-shared";
 
 const MIN_SCALE = 0.5;
@@ -167,6 +168,20 @@ export function PdfReader({ data }: { data: ReaderData }) {
             <p className="truncate text-xs text-[var(--color-ink-soft)]">{data.author}</p>
           )}
         </div>
+
+        <Link
+          href={`/caderno/${data.userBookId}`}
+          className="rounded-full px-3 py-1.5 text-sm text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60"
+          title="Caderno do livro"
+        >
+          📓 Caderno
+        </Link>
+
+        <BookmarksControl
+          userBookId={data.userBookId}
+          currentPage={page}
+          onJump={(p) => setPage(Math.min(Math.max(1, p), numPages || 1))}
+        />
 
         <ModeToggle mode={mode} onChange={setMode} />
 

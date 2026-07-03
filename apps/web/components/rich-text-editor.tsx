@@ -9,7 +9,8 @@ import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
 import type { TiptapDoc } from "@/lib/note-shared";
 
-const extensions = [
+// Extensões compartilhadas entre o editor e o render read-only do caderno.
+export const editorExtensions = [
   StarterKit,
   TaskList,
   TaskItem.configure({ nested: true }),
@@ -29,7 +30,7 @@ export function RichTextEditor({
   onChange: (doc: TiptapDoc, text: string) => void;
 }) {
   const editor = useEditor({
-    extensions,
+    extensions: editorExtensions,
     // Next: evita mismatch de hidratação renderizando só no cliente.
     immediatelyRender: false,
     content: hasContent(initialContent) ? (initialContent as object) : "",

@@ -26,6 +26,13 @@ export async function ownedNote(noteId: string, userId: string) {
   return prisma.note.findFirst({ where: { id: noteId, userId } });
 }
 
+/** Carrega um marcador só se ele pertence ao usuário (via UserBook). */
+export async function ownedBookmark(bookmarkId: string, userId: string) {
+  return prisma.bookmark.findFirst({
+    where: { id: bookmarkId, userBook: { userId } },
+  });
+}
+
 /**
  * Recebe nomes de tag (com ou sem '#'), faz upsert por (userId, name)
  * e devolve os ids. Base do sistema de tags universais (módulo 6).

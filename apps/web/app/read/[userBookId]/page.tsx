@@ -6,12 +6,19 @@ export const dynamic = "force-dynamic";
 
 export default async function ReadPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ userBookId: string }>;
+  searchParams: Promise<{ page?: string }>;
 }) {
   const { userBookId } = await params;
+  const { page } = await searchParams;
   const data = await getReaderData(userBookId);
   if (!data) notFound();
+
+  // Deep-link do caderno: ?page=N abre o leitor direto nessa página.
+  const jump = page ? parseInt(page, 10) : NaN;
+  if (Number.isFinite(jump) && jump > 0) data.lastPage = jump;
 
   // Fase 1: leitor de PDF. EPUB/CBZ ganham seus leitores na Fase 4.
   if (data.format !== "PDF") {
