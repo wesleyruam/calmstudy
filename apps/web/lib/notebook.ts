@@ -3,6 +3,7 @@ import { prisma } from "@calmstudy/db";
 import { getOrCreateDefaultUser } from "@calmstudy/infra";
 import { serializeHighlight, type HighlightDTO } from "./highlight-shared";
 import { serializeNote, type NoteDTO } from "./note-shared";
+import { serializeSummary, type SummaryDTO } from "./summary-shared";
 
 export interface NotebookHighlight extends HighlightDTO {
   notes: NoteDTO[];
@@ -16,6 +17,7 @@ export interface NotebookData {
   pages: number | null;
   highlights: NotebookHighlight[];
   looseNotes: NoteDTO[];
+  summaries: SummaryDTO[];
   counts: {
     highlights: number;
     notes: number;
@@ -53,6 +55,11 @@ export async function getNotebook(userBookId: string): Promise<NotebookData | nu
     orderBy: { updatedAt: "desc" },
   });
 
+  const summaries = await prisma.summary.findMany({
+    where: { userBookId },
+    orderBy: { createdAt: "asc" },
+  });
+
   const tagSet = new Set<string>();
   let notesTotal = looseNotes.length;
   const nbHighlights: NotebookHighlight[] = highlights.map((h) => {
@@ -69,6 +76,7 @@ export async function getNotebook(userBookId: string): Promise<NotebookData | nu
     pages: ub.book.pages,
     highlights: nbHighlights,
     looseNotes: looseNotes.map(serializeNote),
+    summaries: summaries.map(serializeSummary),
     counts: {
       highlights: highlights.length,
       notes: notesTotal,

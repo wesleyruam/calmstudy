@@ -33,6 +33,18 @@ export async function ownedBookmark(bookmarkId: string, userId: string) {
   });
 }
 
+/** Carrega um conceito só se ele pertence ao usuário. */
+export async function ownedConcept(conceptId: string, userId: string) {
+  return prisma.concept.findFirst({ where: { id: conceptId, userId } });
+}
+
+/** Carrega um resumo só se ele pertence ao usuário (via UserBook). */
+export async function ownedSummary(summaryId: string, userId: string) {
+  return prisma.summary.findFirst({
+    where: { id: summaryId, userBook: { userId } },
+  });
+}
+
 /**
  * Recebe nomes de tag (com ou sem '#'), faz upsert por (userId, name)
  * e devolve os ids. Base do sistema de tags universais (módulo 6).

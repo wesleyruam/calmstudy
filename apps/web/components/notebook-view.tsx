@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { HighlightItem } from "@/components/highlight-item";
+import { SummariesSection } from "@/components/summaries-section";
 import {
   CATEGORY_META,
   HIGHLIGHT_CATEGORIES,
@@ -169,6 +170,8 @@ export function NotebookView({ data }: { data: NotebookData }) {
           ))}
         </ul>
       )}
+
+      <SummariesSection userBookId={data.userBookId} initial={data.summaries} />
     </div>
   );
 }

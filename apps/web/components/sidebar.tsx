@@ -42,6 +42,8 @@ export async function Sidebar({
           </div>
           <ul className="flex flex-col gap-0.5">
             <SideLink href="/revisao" icon="🔁" label="Revisão" />
+            <SideLink href="/conhecimento" icon="🧠" label="Conhecimento" />
+            <SideLink href="/mapa" icon="🕸" label="Mapa" />
             <SideLink href="/favoritos" icon="⭐" label="Favoritos" />
             <SideLink href="/timeline" icon="🕒" label="Linha do tempo" />
           </ul>
