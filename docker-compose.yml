@@ -1,28 +1,32 @@
+# name fixo desacopla o projeto (e os volumes) do nome da pasta —
+# assim renomear a pasta não cria volumes novos vazios.
+name: calmstudy
+
 services:
   postgres:
     image: postgres:17-alpine
-    container_name: calmbook-postgres
+    container_name: calmstudy-postgres
     environment:
-      POSTGRES_USER: calmbook
-      POSTGRES_PASSWORD: calmbook
-      POSTGRES_DB: calmbook
+      POSTGRES_USER: calmstudy
+      POSTGRES_PASSWORD: calmstudy
+      POSTGRES_DB: calmstudy
     ports:
       - "5433:5432" # 5433 no host p/ não conflitar com Postgres local
     volumes:
-      - calmbook-pg:/var/lib/postgresql/data
+      - calmstudy-pg:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U calmbook"]
+      test: ["CMD-SHELL", "pg_isready -U calmstudy"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: calmbook-redis
+    container_name: calmstudy-redis
     ports:
       - "6380:6379" # 6380 no host p/ não conflitar com Redis local
     volumes:
-      - calmbook-redis:/data
+      - calmstudy-redis:/data
 
   # Fase 2+: descomente quando entrar storage S3 e busca full-text.
   # minio:
@@ -30,19 +34,19 @@ services:
   #   command: server /data --console-address ":9001"
   #   ports: ["9000:9000", "9001:9001"]
   #   environment:
-  #     MINIO_ROOT_USER: calmbook
-  #     MINIO_ROOT_PASSWORD: calmbook123
-  #   volumes: ["calmbook-minio:/data"]
+  #     MINIO_ROOT_USER: calmstudy
+  #     MINIO_ROOT_PASSWORD: calmstudy123
+  #   volumes: ["calmstudy-minio:/data"]
   #
   # meilisearch:
   #   image: getmeili/meilisearch:v1.11
   #   ports: ["7700:7700"]
   #   environment:
-  #     MEILI_MASTER_KEY: calmbook-dev-key
-  #   volumes: ["calmbook-meili:/meili_data"]
+  #     MEILI_MASTER_KEY: calmstudy-dev-key
+  #   volumes: ["calmstudy-meili:/meili_data"]
 
 volumes:
-  calmbook-pg:
-  calmbook-redis:
-  # calmbook-minio:
-  # calmbook-meili:
+  calmstudy-pg:
+  calmstudy-redis:
+  # calmstudy-minio:
+  # calmstudy-meili:

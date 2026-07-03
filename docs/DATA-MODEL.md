@@ -1,4 +1,4 @@
-# Modelo de Dados — CalmBook
+# Modelo de Dados — CalmStudy
 
 Refinamento do schema do brief. Notação conceitual (não é Prisma final, mas mapeia 1:1).
 Princípios: tudo pertence a um `User`; metadata flexível em **JSONB**; marcações usam

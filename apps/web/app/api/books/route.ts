@@ -3,7 +3,7 @@ import {
   ingestUpload,
   formatFromFilename,
   getOrCreateDefaultUser,
-} from "@calmbook/infra";
+} from "@calmstudy/infra";
 
 export const runtime = "nodejs";
 

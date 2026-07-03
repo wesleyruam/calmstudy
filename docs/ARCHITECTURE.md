@@ -1,4 +1,4 @@
-# Arquitetura — CalmBook
+# Arquitetura — CalmStudy
 
 Documento de arquitetura e decisões técnicas. Sem código ainda; aqui definimos *o que*
 construir e *por quê*, na ordem que reduz risco. O roadmap em fases está em
@@ -178,7 +178,7 @@ Nenhuma dessas etapas trava a request original — princípio para todo trabalho
 deploys independentes.
 
 ```
-calmbook/
+calmstudy/
 ├─ apps/
 │  ├─ web/                 # Next.js: UI + Route Handlers (BFF)
 │  │  ├─ app/

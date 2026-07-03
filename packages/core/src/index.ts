@@ -1,4 +1,4 @@
-// @calmbook/core — domínio puro (sem Next, sem infra concreta).
+// @calmstudy/core — domínio puro (sem Next, sem infra concreta).
 // Casos de uso conversam com infraestrutura apenas através destas portas.
 
 export type { StorageProvider } from "./ports/storage.js";

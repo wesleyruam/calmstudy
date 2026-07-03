@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@calmbook/db";
-import { getOrCreateDefaultUser, enqueueDocument } from "@calmbook/infra";
+import { prisma } from "@calmstudy/db";
+import { getOrCreateDefaultUser, enqueueDocument } from "@calmstudy/infra";
 
 export const runtime = "nodejs";
 

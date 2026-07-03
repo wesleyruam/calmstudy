@@ -1,5 +1,5 @@
 {
-  "name": "@calmbook/core",
+  "name": "@calmstudy/core",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@calmbook/db": "workspace:*",
+    "@calmstudy/db": "workspace:*",
     "zod": "^3.24.1"
   },
   "devDependencies": {

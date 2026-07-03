@@ -1,6 +1,6 @@
 import "server-only";
-import { prisma } from "@calmbook/db";
-import { getOrCreateDefaultUser } from "@calmbook/infra";
+import { prisma } from "@calmstudy/db";
+import { getOrCreateDefaultUser } from "@calmstudy/infra";
 
 export interface ReaderData {
   userBookId: string;

@@ -1,7 +1,7 @@
 import "server-only";
-import { prisma } from "@calmbook/db";
-import type { Prisma } from "@calmbook/db";
-import { getOrCreateDefaultUser } from "@calmbook/infra";
+import { prisma } from "@calmstudy/db";
+import type { Prisma } from "@calmstudy/db";
+import { getOrCreateDefaultUser } from "@calmstudy/infra";
 
 export interface LibraryItem {
   userBookId: string;

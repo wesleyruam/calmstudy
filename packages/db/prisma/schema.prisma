@@ -1,4 +1,4 @@
-// CalmBook — schema Prisma. Mapeia docs/DATA-MODEL.md.
+// CalmStudy — schema Prisma. Mapeia docs/DATA-MODEL.md.
 // Fase 1: User, Book, UserBook + organização (Shelf/Collection/Tag) + marcações.
 // Fase 5 adiciona Embedding (pgvector). Veja docs/ROADMAP.md.
 

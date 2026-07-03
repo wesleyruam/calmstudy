@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile, rm } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import type { StorageProvider } from "@calmbook/core";
+import type { StorageProvider } from "@calmstudy/core";
 
 /**
  * StorageProvider em filesystem — para desenvolvimento.

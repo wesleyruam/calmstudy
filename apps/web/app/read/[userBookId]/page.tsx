@@ -20,7 +20,7 @@ export default async function ReadPage({
         <div>
           <p className="font-serif text-xl">Leitor de {data.format} em breve</p>
           <p className="mt-2 text-sm text-[var(--color-ink-soft)]">
-            Por enquanto o CalmBook abre PDFs. Volte para a{" "}
+            Por enquanto o CalmStudy abre PDFs. Volte para a{" "}
             <a href="/" className="text-[var(--color-accent)] underline">
               biblioteca
             </a>

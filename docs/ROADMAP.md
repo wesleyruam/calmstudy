@@ -1,4 +1,4 @@
-# Roadmap — CalmBook
+# Roadmap — CalmStudy
 
 Construção em **fatias verticais**: cada fase entrega algo *usável de ponta a ponta*, não
 uma camada horizontal isolada. A ordem prioriza provar a arquitetura cedo e adiar o que é
@@ -19,7 +19,7 @@ Documentos de stack, arquitetura, modelo de dados e roadmap. **Você está aqui.
 
 - ✅ Scaffold do monorepo (Turborepo + pnpm): `web`, `worker`, `core`, `db`, `infra`.
 - ✅ `docker-compose`: Postgres + Redis (portas 5433/6380). Prisma schema + migration.
-- ⬜ Auth.js (e-mail/senha) — por ora usa usuário padrão (`voce@calmbook.local`).
+- ⬜ Auth.js (e-mail/senha) — por ora usa usuário padrão (`voce@calmstudy.local`).
 - ✅ Upload de PDF → `StorageProvider` (FS) → cria Book `PROCESSING` → enfileira job.
 - ✅ Worker: extrai texto, conta páginas, metadata → marca `READY`. (capa/thumbnail: pendente)
 - ✅ Biblioteca: grid de cards + estado vazio + drag&drop + polling até `READY`.
@@ -32,7 +32,7 @@ resta auth opcional + capa/thumbnail)*
 ---
 
 ## Fase 2 — Identidade visual + organização 🟡
-**Meta:** parecer e funcionar como CalmBook — calmo, organizado.
+**Meta:** parecer e funcionar como CalmStudy — calmo, organizado.
 
 - 🟡 Design system: Navbar + Sidebar ✅ (busca/perfil ainda estáticos).
 - ✅ Tema claro/escuro (toggle + anti-flash). Transições Framer Motion: pendente.
@@ -85,7 +85,7 @@ tema ✅; faltam coleções/tags, busca e CRUD de metadata)*
 - 🟡 Flashcards (IA) + exportação Anki; Quiz (múltipla/V-F/dissertativa).
 - 🟡 Busca total com Meilisearch (dentro do texto completo, typo-tolerant).
 
-**Entregável:** CalmBook como ambiente de estudo assistido por IA.
+**Entregável:** CalmStudy como ambiente de estudo assistido por IA.
 
 ---
 

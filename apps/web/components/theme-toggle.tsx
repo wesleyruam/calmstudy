@@ -15,7 +15,7 @@ export function ThemeToggle() {
     const next = !document.documentElement.classList.contains("dark");
     document.documentElement.classList.toggle("dark", next);
     try {
-      localStorage.setItem("calmbook-theme", next ? "dark" : "light");
+      localStorage.setItem("calmstudy-theme", next ? "dark" : "light");
     } catch {
       // localStorage indisponível — ignora
     }

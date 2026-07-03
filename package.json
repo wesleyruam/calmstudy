@@ -1,5 +1,5 @@
 {
-  "name": "calmbook",
+  "name": "calmstudy",
   "version": "0.0.0",
   "private": true,
   "description": "Biblioteca digital pessoal — leitura, estudo e organização.",
@@ -12,9 +12,9 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "db:generate": "pnpm --filter @calmbook/db generate",
-    "db:migrate": "pnpm --filter @calmbook/db migrate",
-    "db:studio": "pnpm --filter @calmbook/db studio",
+    "db:generate": "pnpm --filter @calmstudy/db generate",
+    "db:migrate": "pnpm --filter @calmstudy/db migrate",
+    "db:studio": "pnpm --filter @calmstudy/db studio",
     "infra:up": "docker compose up -d",
     "infra:down": "docker compose down"
   },

@@ -1,5 +1,5 @@
 {
-  "name": "@calmbook/web",
+  "name": "@calmstudy/web",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -11,9 +11,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@calmbook/core": "workspace:*",
-    "@calmbook/db": "workspace:*",
-    "@calmbook/infra": "workspace:*",
+    "@calmstudy/core": "workspace:*",
+    "@calmstudy/db": "workspace:*",
+    "@calmstudy/infra": "workspace:*",
     "@tanstack/react-query": "^5.62.7",
     "framer-motion": "^11.15.0",
     "next": "^15.1.2",

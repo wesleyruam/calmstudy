@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { prisma, type BookFormat } from "@calmbook/db";
+import { prisma, type BookFormat } from "@calmstudy/db";
 import { FilesystemStorage } from "./storage/filesystem.js";
 import { enqueueDocument } from "./queue.js";
 

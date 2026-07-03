@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CalmBook — sua biblioteca digital",
+  title: "CalmStudy — sua biblioteca digital",
   description:
     "Leitura, estudo e organização. Notion + Kindle + Apple Books + Obsidian para sua biblioteca pessoal.",
 };
 
 // Aplica o tema salvo antes da pintura para não piscar (FOUC).
-const themeScript = `(function(){try{var t=localStorage.getItem('calmbook-theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}})();`;
+const themeScript = `(function(){try{var t=localStorage.getItem('calmstudy-theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

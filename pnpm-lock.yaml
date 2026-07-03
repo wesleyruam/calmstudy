@@ -23,13 +23,13 @@ importers:
 
   apps/web:
     dependencies:
-      '@calmbook/core':
+      '@calmstudy/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@calmbook/db':
+      '@calmstudy/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@calmbook/infra':
+      '@calmstudy/infra':
         specifier: workspace:*
         version: link:../../packages/infra
       '@tanstack/react-query':
@@ -87,13 +87,13 @@ importers:
 
   apps/worker:
     dependencies:
-      '@calmbook/core':
+      '@calmstudy/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@calmbook/db':
+      '@calmstudy/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@calmbook/infra':
+      '@calmstudy/infra':
         specifier: workspace:*
         version: link:../../packages/infra
       bullmq:
@@ -115,7 +115,7 @@ importers:
 
   packages/core:
     dependencies:
-      '@calmbook/db':
+      '@calmstudy/db':
         specifier: workspace:*
         version: link:../db
       zod:
@@ -144,10 +144,10 @@ importers:
 
   packages/infra:
     dependencies:
-      '@calmbook/core':
+      '@calmstudy/core':
         specifier: workspace:*
         version: link:../core
-      '@calmbook/db':
+      '@calmstudy/db':
         specifier: workspace:*
         version: link:../db
       '@napi-rs/canvas':

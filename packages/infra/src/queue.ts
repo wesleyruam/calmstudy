@@ -1,6 +1,6 @@
 import { Queue } from "bullmq";
 import { Redis } from "ioredis";
-import { QUEUES, type ProcessDocumentJob } from "@calmbook/core";
+import { QUEUES, type ProcessDocumentJob } from "@calmstudy/core";
 
 /** Conexão Redis compartilhada (produtor no web, consumidor no worker). */
 export function createRedis(): Redis {

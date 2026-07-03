@@ -1,8 +1,8 @@
 import { Worker } from "bullmq";
-import { QUEUES, type ProcessDocumentJob } from "@calmbook/core";
-import { prisma } from "@calmbook/db";
-import { FilesystemStorage, createRedis, storeCover } from "@calmbook/infra";
-import { parserFor, renderCover } from "@calmbook/infra/worker";
+import { QUEUES, type ProcessDocumentJob } from "@calmstudy/core";
+import { prisma } from "@calmstudy/db";
+import { FilesystemStorage, createRedis, storeCover } from "@calmstudy/infra";
+import { parserFor, renderCover } from "@calmstudy/infra/worker";
 
 const connection = createRedis();
 const storage = new FilesystemStorage();
@@ -66,4 +66,4 @@ worker.on("failed", async (job, err) => {
   }
 });
 
-console.log("[worker] CalmBook worker no ar, ouvindo a fila de documentos.");
+console.log("[worker] CalmStudy worker no ar, ouvindo a fila de documentos.");

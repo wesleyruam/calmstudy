@@ -84,7 +84,7 @@ function EmptyState({ filter, shelf }: { filter: LibraryFilter; shelf: boolean }
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-[var(--color-ink-soft)]">
           {inviteUpload
-            ? "Arraste um PDF, EPUB ou outro documento — ou clique abaixo. O CalmBook extrai título, autor e páginas automaticamente."
+            ? "Arraste um PDF, EPUB ou outro documento — ou clique abaixo. O CalmStudy extrai título, autor e páginas automaticamente."
             : shelf
               ? "Passe o mouse sobre um livro e use o ícone 🗂 para adicioná-lo a esta prateleira."
               : "Nenhum livro corresponde a este filtro por enquanto."}

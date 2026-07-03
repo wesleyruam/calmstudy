@@ -1,4 +1,4 @@
-import type { DocumentParser } from "@calmbook/core";
+import type { DocumentParser } from "@calmstudy/core";
 import { PdfParser } from "./pdf.js";
 
 const parsers: DocumentParser[] = [new PdfParser()];

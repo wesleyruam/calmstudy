@@ -1,5 +1,5 @@
 {
-  "name": "@calmbook/infra",
+  "name": "@calmstudy/infra",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -13,8 +13,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@calmbook/core": "workspace:*",
-    "@calmbook/db": "workspace:*",
+    "@calmstudy/core": "workspace:*",
+    "@calmstudy/db": "workspace:*",
     "@napi-rs/canvas": "^0.1.100",
     "bullmq": "^5.34.0",
     "ioredis": "^5.11.1",

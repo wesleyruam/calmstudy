@@ -1,5 +1,5 @@
 import { extractText, getDocumentProxy, getMeta } from "unpdf";
-import type { DocumentParser, ParsedDocument, ParsedMetadata } from "@calmbook/core";
+import type { DocumentParser, ParsedDocument, ParsedMetadata } from "@calmstudy/core";
 
 /**
  * Parser de PDF usando unpdf (PDF.js empacotado p/ Node, sem deps nativas).

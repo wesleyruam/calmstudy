@@ -1,19 +1,33 @@
-# CalmBook
+# CalmStudy
 
-> Sua biblioteca digital pessoal — um ambiente de leitura, estudo e organização.
-> A ambição: **Notion + Kindle + Apple Books + Obsidian**, focado em consumir conhecimento, conectar ideias e acompanhar a evolução do aprendizado.
+> **Plataforma de estudos baseada em leitura.** Cada livro, artigo ou apostila deixa de ser
+> apenas um arquivo e vira um espaço de aprendizagem.
 
-CalmBook não é "mais um visualizador de PDF". É um espaço onde você importa qualquer
-documento (PDF, EPUB, MOBI, CBZ, ...), organiza em prateleiras e coleções, lê com um
-leitor altamente personalizável, anota, destaca, e usa IA para estudar — tudo
-sincronizado.
+CalmStudy não é "mais um leitor de PDF/EPUB". É um ambiente onde a leitura **gera
+conhecimento organizado**: cada destaque vira anotação, cada anotação se conecta a outras,
+cada capítulo tem seus resumos e conceitos. Ao terminar um livro, você não tem só o
+progresso — tem um material de estudo construído por você.
+
+Reúne o melhor de uma biblioteca digital, um leitor moderno, um caderno de estudos e uma
+base de conhecimento em um só lugar (inspirado em Kindle, Apple Books, Notion e Obsidian,
+com identidade própria).
 
 ## Filosofia
 
-Calma · foco · silêncio · conforto · produtividade · organização.
+Calma · foco · aprendizado · organização · reflexão · retenção.
 
-Nada de interfaces cheias de botões. Tudo respira. Muito espaço em branco, animações
-suaves, vidro fosco, sombras discretas.
+Tudo respira: interface minimalista, muito espaço em branco, vidro fosco, sombras discretas,
+animações suaves. As ferramentas de estudo aparecem só quando fazem sentido — a leitura
+nunca é interrompida. **A IA não é o centro**: a plataforma tem que ser completa mesmo sem
+nenhum recurso de inteligência artificial.
+
+## Princípios
+
+- O livro é apenas a origem do conhecimento.
+- Toda leitura deve gerar aprendizado.
+- O conhecimento pertence ao usuário, não ao documento.
+- Estudar deve ser confortável; organização deve acontecer naturalmente.
+- Tudo precisa ser pesquisável e reutilizável.
 
 ## Documentação
 

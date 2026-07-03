@@ -1,4 +1,4 @@
-// @calmbook/infra — adapters concretos das portas de @calmbook/core.
+// @calmstudy/infra — adapters concretos das portas de @calmstudy/core.
 // Entrada principal (.) é leve: storage, fila, users, books — usada pelo web.
 // Os parsers (que puxam unpdf/pdfjs, pesado) ficam em "./worker", só p/ o worker.
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@calmbook/db";
-import { getOrCreateDefaultUser, FilesystemStorage, deleteCover } from "@calmbook/infra";
+import { prisma } from "@calmstudy/db";
+import { getOrCreateDefaultUser, FilesystemStorage, deleteCover } from "@calmstudy/infra";
 
 export const runtime = "nodejs";
 

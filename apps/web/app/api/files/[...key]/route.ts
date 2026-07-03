@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { FilesystemStorage } from "@calmbook/infra";
+import { FilesystemStorage } from "@calmstudy/infra";
 
 export const runtime = "nodejs";
 

@@ -10,7 +10,7 @@ export function Navbar() {
           <span className="grid size-8 place-items-center rounded-lg bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
             <BookGlyph />
           </span>
-          <span className="font-serif text-lg tracking-tight">CalmBook</span>
+          <span className="font-serif text-lg tracking-tight">CalmStudy</span>
         </div>
 
         <div className="mx-auto flex w-full max-w-md items-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm text-[var(--color-ink-soft)] shadow-[var(--shadow-calm)]">
