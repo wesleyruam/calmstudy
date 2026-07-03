@@ -9,6 +9,7 @@ import { PdfPageView, type NewHighlight } from "@/components/pdf-page";
 import { HighlightPanel } from "@/components/highlight-panel";
 import { HighlightNotes } from "@/components/highlight-notes";
 import { BookmarksControl } from "@/components/bookmarks-control";
+import { StudySessionTracker } from "@/components/study-session-tracker";
 import type { HighlightDTO } from "@/lib/highlight-shared";
 
 const MIN_SCALE = 0.5;
@@ -154,6 +155,7 @@ export function PdfReader({ data }: { data: ReaderData }) {
 
   return (
     <div className="flex min-h-dvh flex-col bg-[var(--color-paper)]">
+      <StudySessionTracker userBookId={data.userBookId} page={page} />
       {/* barra superior */}
       <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-[var(--color-line)] bg-[var(--color-paper)]/80 px-4 backdrop-blur-xl">
         <Link

@@ -45,6 +45,23 @@ export async function ownedSummary(summaryId: string, userId: string) {
   });
 }
 
+/** Carrega uma sessão de estudo só se ela pertence ao usuário (via UserBook). */
+export async function ownedSession(sessionId: string, userId: string) {
+  return prisma.studySession.findFirst({
+    where: { id: sessionId, userBook: { userId } },
+  });
+}
+
+/** Carrega uma meta só se ela pertence ao usuário (via UserBook). */
+export async function ownedGoal(goalId: string, userId: string) {
+  return prisma.goal.findFirst({ where: { id: goalId, userBook: { userId } } });
+}
+
+/** Carrega uma tarefa do checklist só se ela pertence ao usuário (via UserBook). */
+export async function ownedTask(taskId: string, userId: string) {
+  return prisma.bookTask.findFirst({ where: { id: taskId, userBook: { userId } } });
+}
+
 /**
  * Recebe nomes de tag (com ou sem '#'), faz upsert por (userId, name)
  * e devolve os ids. Base do sistema de tags universais (módulo 6).

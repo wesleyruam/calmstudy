@@ -149,6 +149,9 @@ model UserBook {
   stickers    Sticker[]
   concepts    ConceptBook[]
   summaries   Summary[]
+  sessions    StudySession[]
+  goals       Goal[]
+  tasks       BookTask[]
 
   @@unique([userId, bookId])
   @@index([userId, status])
@@ -406,6 +409,53 @@ model ConceptTag {
   tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([conceptId, tagId])
+}
+
+// ─────────────────────────── Métricas (E4) ───────────────────────────
+
+// Sessão de estudo (módulo 11): uma janela de leitura com tempo ativo e páginas.
+model StudySession {
+  id         String    @id @default(uuid())
+  userBookId String
+  startedAt  DateTime  @default(now())
+  endedAt    DateTime?
+  seconds    Int       @default(0) // tempo ativo acumulado
+  startPage  Int?
+  endPage    Int?
+
+  userBook UserBook @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+
+  @@index([userBookId])
+  @@index([startedAt])
+}
+
+// Objetivo de estudo (módulo 15): meta com alvo opcional.
+model Goal {
+  id         String   @id @default(uuid())
+  userBookId String
+  title      String
+  kind       String   @default("CUSTOM") // PAGES | MINUTES | CHAPTER | CUSTOM
+  target     Int?
+  done       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  userBook UserBook @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+
+  @@index([userBookId])
+}
+
+// Checklist de estudos (módulo 16): tarefas simples por livro.
+model BookTask {
+  id         String   @id @default(uuid())
+  userBookId String
+  title      String
+  done       Boolean  @default(false)
+  order      Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  userBook UserBook @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+
+  @@index([userBookId])
 }
 
 // Resumo por capítulo (módulo 9): resumo/ideias/aprendizados de uma parte do livro.

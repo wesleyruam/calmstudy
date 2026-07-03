@@ -87,12 +87,20 @@ export function NotebookView({ data }: { data: NotebookData }) {
               <p className="mt-0.5 text-sm text-[var(--color-ink-soft)]">{data.author}</p>
             )}
           </div>
-          <Link
-            href={`/read/${data.userBookId}`}
-            className="shrink-0 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm transition-colors hover:bg-[var(--color-line)]/40"
-          >
-            Abrir leitor
-          </Link>
+          <div className="flex shrink-0 gap-2">
+            <Link
+              href={`/livro/${data.userBookId}`}
+              className="rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm transition-colors hover:bg-[var(--color-line)]/40"
+            >
+              📊 Painel
+            </Link>
+            <Link
+              href={`/read/${data.userBookId}`}
+              className="rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm transition-colors hover:bg-[var(--color-line)]/40"
+            >
+              Abrir leitor
+            </Link>
+          </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2 text-xs text-[var(--color-ink-soft)]">
           <Pill>{plural(data.counts.highlights, "destaque", "destaques")}</Pill>

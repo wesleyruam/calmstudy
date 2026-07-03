@@ -44,6 +44,7 @@ export async function Sidebar({
             <SideLink href="/revisao" icon="🔁" label="Revisão" />
             <SideLink href="/conhecimento" icon="🧠" label="Conhecimento" />
             <SideLink href="/mapa" icon="🕸" label="Mapa" />
+            <SideLink href="/estatisticas" icon="📊" label="Estatísticas" />
             <SideLink href="/favoritos" icon="⭐" label="Favoritos" />
             <SideLink href="/timeline" icon="🕒" label="Linha do tempo" />
           </ul>

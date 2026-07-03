@@ -134,6 +134,14 @@ export function CardActions({
             >
               📓 Caderno
             </MenuItem>
+            <MenuItem
+              onClick={(e) => {
+                e.preventDefault();
+                router.push(`/livro/${userBookId}`);
+              }}
+            >
+              📊 Painel
+            </MenuItem>
             <MenuItem onClick={rename}>✏️ Renomear</MenuItem>
 
             {shelves.length > 0 && (
