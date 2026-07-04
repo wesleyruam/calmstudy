@@ -63,10 +63,22 @@ export interface HighlightDTO {
   priority: Priority | null;
   favorite: boolean;
   reviewStatus: ReviewStatus;
+  reviewCount: number;
+  lastReviewedAt: string | null;
+  nextReviewAt: string | null;
   tags: string[];
   noteCount: number;
   createdAt: string;
   updatedAt: string;
+}
+
+// Repetição espaçada (módulo 24): intervalos (dias) por número de acertos.
+export const REVIEW_INTERVALS_DAYS = [1, 3, 7, 16, 35, 75] as const;
+
+/** Próximo intervalo (dias) dado quantas vezes o item já foi revisado com "Bom". */
+export function reviewIntervalDays(reviewCount: number): number {
+  const i = Math.min(Math.max(reviewCount, 0), REVIEW_INTERVALS_DAYS.length - 1);
+  return REVIEW_INTERVALS_DAYS[i] ?? REVIEW_INTERVALS_DAYS[0];
 }
 
 /** Cor efetiva de um destaque: override personalizado ou a cor da categoria. */
@@ -99,6 +111,9 @@ interface HighlightRow {
   priority: string | null;
   favorite: boolean;
   reviewStatus: string;
+  reviewCount?: number;
+  lastReviewedAt?: Date | string | null;
+  nextReviewAt?: Date | string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
   tags?: { tag: { name: string } }[];
@@ -118,6 +133,9 @@ export function serializeHighlight(h: HighlightRow): HighlightDTO {
     priority: h.priority as Priority | null,
     favorite: h.favorite,
     reviewStatus: h.reviewStatus as ReviewStatus,
+    reviewCount: h.reviewCount ?? 0,
+    lastReviewedAt: h.lastReviewedAt ? new Date(h.lastReviewedAt).toISOString() : null,
+    nextReviewAt: h.nextReviewAt ? new Date(h.nextReviewAt).toISOString() : null,
     tags: (h.tags ?? []).map((t) => t.tag.name),
     noteCount: h._count?.notes ?? 0,
     createdAt: new Date(h.createdAt).toISOString(),

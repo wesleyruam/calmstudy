@@ -26,18 +26,23 @@ const REVIEW_NEXT: Record<string, string> = {
 };
 
 // Card de destaque reutilizado no Caderno, Revisão, Favoritos e Linha do tempo.
+export type ReviewResult = "again" | "good" | "mastered";
+
 export function HighlightItem({
   h,
   showBook,
   onPatch,
   onRemove,
   onTagClick,
+  onReview,
 }: {
   h: StudyHighlight;
   showBook?: boolean;
   onPatch: (id: string, body: Record<string, unknown>) => void;
   onRemove: (id: string) => void;
   onTagClick?: (tag: string) => void;
+  // Quando presente, mostra os botões de graduação da repetição espaçada.
+  onReview?: (id: string, result: ReviewResult) => void;
 }) {
   const color = highlightColor(h);
   const meta = CATEGORY_META[h.category];
@@ -139,6 +144,30 @@ export function HighlightItem({
           <NoteRender content={n.content} />
         </div>
       ))}
+
+      {onReview && (
+        <div className="mt-3 flex items-center gap-2 border-t border-[var(--color-line)] pt-3">
+          <span className="text-xs text-[var(--color-ink-soft)]">Como foi?</span>
+          <button
+            onClick={() => onReview(h.id, "again")}
+            className="rounded-full border border-[var(--color-line)] px-3 py-1 text-xs transition-colors hover:bg-[var(--color-line)]/50"
+          >
+            De novo
+          </button>
+          <button
+            onClick={() => onReview(h.id, "good")}
+            className="rounded-full bg-[var(--color-accent-soft)] px-3 py-1 text-xs font-medium text-[var(--color-ink)] transition-opacity hover:opacity-80"
+          >
+            Bom
+          </button>
+          <button
+            onClick={() => onReview(h.id, "mastered")}
+            className="ml-auto rounded-full border border-[var(--color-line)] px-3 py-1 text-xs text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/50 hover:text-[var(--color-ink)]"
+          >
+            Dominado
+          </button>
+        </div>
+      )}
     </li>
   );
 }

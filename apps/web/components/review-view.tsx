@@ -12,9 +12,10 @@ import {
 } from "@/lib/highlight-shared";
 import type { ReviewData, ReviewHighlight } from "@/lib/review";
 
-type Preset = "all" | "notes" | "questions" | "review" | "favorites";
+type Preset = "today" | "all" | "notes" | "questions" | "review" | "favorites";
 
 const PRESETS: { key: Preset; label: string }[] = [
+  { key: "today", label: "Revisar hoje" },
   { key: "all", label: "Tudo" },
   { key: "notes", label: "Com nota" },
   { key: "questions", label: "Dúvidas" },
@@ -22,9 +23,16 @@ const PRESETS: { key: Preset; label: string }[] = [
   { key: "favorites", label: "Favoritos" },
 ];
 
+// Item vencido na repetição espaçada: em revisão e com data no passado (ou sem data).
+function isDue(h: { reviewStatus: string; nextReviewAt: string | null }, now: number): boolean {
+  return h.reviewStatus === "PENDING" && (!h.nextReviewAt || new Date(h.nextReviewAt).getTime() <= now);
+}
+
 export function ReviewView({ data }: { data: ReviewData }) {
   const [items, setItems] = useState<ReviewHighlight[]>(data.highlights);
-  const [preset, setPreset] = useState<Preset>("all");
+  const [now] = useState(() => Date.now());
+  const dueCount = useMemo(() => items.filter((h) => isDue(h, now)).length, [items, now]);
+  const [preset, setPreset] = useState<Preset>(dueCount > 0 ? "today" : "all");
   const [cats, setCats] = useState<Set<HighlightCategory>>(new Set());
   const [book, setBook] = useState("");
   const [tag, setTag] = useState("");
@@ -39,6 +47,7 @@ export function ReviewView({ data }: { data: ReviewData }) {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return items.filter((h) => {
+      if (preset === "today" && !isDue(h, now)) return false;
       if (preset === "notes" && h.notes.length === 0) return false;
       if (preset === "questions" && h.category !== "QUESTION") return false;
       if (preset === "review" && h.reviewStatus !== "PENDING") return false;
@@ -54,7 +63,7 @@ export function ReviewView({ data }: { data: ReviewData }) {
       }
       return true;
     });
-  }, [items, preset, cats, book, tag, query]);
+  }, [items, preset, cats, book, tag, query, now]);
 
   function toggleCat(c: HighlightCategory) {
     setCats((prev) => {
@@ -77,6 +86,16 @@ export function ReviewView({ data }: { data: ReviewData }) {
   async function remove(id: string) {
     const res = await fetch(`/api/highlights/${id}`, { method: "DELETE" });
     if (res.ok) setItems((prev) => prev.filter((h) => h.id !== id));
+  }
+  async function review(id: string, result: "again" | "good" | "mastered") {
+    const res = await fetch(`/api/highlights/${id}/review`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ result }),
+    });
+    if (!res.ok) return;
+    const { highlight } = await res.json();
+    setItems((prev) => prev.map((h) => (h.id === id ? { ...h, ...highlight, notes: h.notes } : h)));
   }
 
   return (
@@ -108,6 +127,11 @@ export function ReviewView({ data }: { data: ReviewData }) {
             ].join(" ")}
           >
             {p.label}
+            {p.key === "today" && dueCount > 0 && (
+              <span className="ml-1.5 rounded-full bg-[var(--color-accent)] px-1.5 text-[11px] font-medium text-white">
+                {dueCount}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -181,7 +205,9 @@ export function ReviewView({ data }: { data: ReviewData }) {
         <p className="mt-16 text-center text-sm text-[var(--color-ink-soft)]">
           {items.length === 0
             ? "Nada por aqui ainda. Comece a destacar trechos nos seus livros."
-            : "Nenhum item com esses filtros."}
+            : preset === "today"
+              ? "Tudo revisado por hoje. Volte amanhã."
+              : "Nenhum item com esses filtros."}
         </p>
       ) : (
         <ul className="space-y-4">
@@ -193,6 +219,7 @@ export function ReviewView({ data }: { data: ReviewData }) {
               onPatch={patch}
               onRemove={remove}
               onTagClick={setTag}
+              onReview={preset === "today" ? review : undefined}
             />
           ))}
         </ul>

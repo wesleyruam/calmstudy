@@ -247,6 +247,10 @@ model Highlight {
   priority     Priority?
   favorite     Boolean           @default(false)
   reviewStatus ReviewStatus      @default(NONE)
+  // Repetição espaçada (E5, módulo 24): agenda de revisão.
+  reviewCount    Int       @default(0)
+  lastReviewedAt DateTime?
+  nextReviewAt   DateTime?
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
 

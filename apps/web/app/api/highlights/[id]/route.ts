@@ -31,7 +31,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const existing = await ownedHighlight(id, user.id);
   if (!existing) return NextResponse.json({ error: "Não encontrado." }, { status: 404 });
 
-  const { tags, ...data } = parsed.data;
+  const { tags, ...rest } = parsed.data;
+  const data: Record<string, unknown> = { ...rest };
+
+  // Mantém a agenda de revisão coerente com o rótulo (módulo 24):
+  // PENDING entra na fila (vence agora); demais saem da rotação.
+  if (rest.reviewStatus === "PENDING") {
+    if (!existing.nextReviewAt) data.nextReviewAt = new Date();
+  } else if (rest.reviewStatus && rest.reviewStatus !== "REVIEWED") {
+    data.nextReviewAt = null;
+  }
 
   if (tags) {
     const tagIds = await upsertTags(user.id, tags);
