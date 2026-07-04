@@ -12,6 +12,7 @@ import { BookmarksControl } from "@/components/bookmarks-control";
 import { StudySessionTracker } from "@/components/study-session-tracker";
 import { ReaderRail } from "@/components/reader-rail";
 import { ReaderPagePanel, type PanelTab } from "@/components/reader-page-panel";
+import { ReaderTools, type ReaderTool } from "@/components/reader-tools";
 import { Notebook, ArrowLeft, ChevronLeft, ChevronRight, PanelRight } from "lucide-react";
 import type { HighlightDTO } from "@/lib/highlight-shared";
 import type { NoteDTO } from "@/lib/note-shared";
@@ -37,6 +38,7 @@ export function PdfReader({ data }: { data: ReaderData }) {
   const [notes, setNotes] = useState<NoteDTO[]>([]);
   const [panelTab, setPanelTab] = useState<PanelTab>("content");
   const [panelOpen, setPanelOpen] = useState(true);
+  const [tool, setTool] = useState<ReaderTool>("select");
 
   // Acompanha o tema (classe .dark no <html>) para inverter o PDF no modo escuro,
   // fazendo a página se fundir com o fundo do leitor.
@@ -151,6 +153,15 @@ export function PdfReader({ data }: { data: ReaderData }) {
     setPanelTab(t);
     setPanelOpen(true);
   }, []);
+
+  // Marca a página atual (barra flutuante de ferramentas).
+  const bookmarkPage = useCallback(async () => {
+    await fetch(`/api/userbooks/${data.userBookId}/bookmarks`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ page }),
+    }).catch(() => {});
+  }, [data.userBookId, page]);
 
   const updateHighlight = useCallback((h: HighlightDTO) => {
     setHighlights((prev) => prev.map((x) => (x.id === h.id ? h : x)));
@@ -293,35 +304,49 @@ export function PdfReader({ data }: { data: ReaderData }) {
           onTool={openTool}
         />
 
-        <div className="flex min-h-0 min-w-0 flex-1 justify-center overflow-auto px-4 py-8">
-          {error ? (
-            <p className="mt-20 text-sm text-[var(--color-ink-soft)]">{error}</p>
-          ) : loading || !doc ? (
-            <p className="mt-20 animate-pulse text-sm text-[var(--color-ink-soft)]">
-              Abrindo documento…
-            </p>
-          ) : mode === "book" ? (
-            <BookView
-              ref={bookRef}
-              doc={doc}
-              numPages={numPages}
-              scale={scale}
-              dark={dark}
-              initialPage={page}
-              onPage={setPage}
-            />
-          ) : (
-            <PdfPageView
-              doc={doc}
-              page={page}
-              scale={scale}
-              dark={dark}
-              highlights={highlights}
-              activeId={activeHighlight?.id ?? null}
-              onCreate={createHighlight}
-              onOpen={setActiveHighlight}
-            />
+        <div className="flex min-h-0 min-w-0 flex-1">
+          {mode === "single" && !loading && doc && !error && (
+            <div className="flex w-14 shrink-0 items-center justify-center">
+              <ReaderTools
+                tool={tool}
+                onTool={setTool}
+                onNote={() => openTool("notes")}
+                onQuestion={() => openTool("questions")}
+                onBookmark={bookmarkPage}
+              />
+            </div>
           )}
+          <div className="flex flex-1 justify-center overflow-auto px-4 py-8">
+            {error ? (
+              <p className="mt-20 text-sm text-[var(--color-ink-soft)]">{error}</p>
+            ) : loading || !doc ? (
+              <p className="mt-20 animate-pulse text-sm text-[var(--color-ink-soft)]">
+                Abrindo documento…
+              </p>
+            ) : mode === "book" ? (
+              <BookView
+                ref={bookRef}
+                doc={doc}
+                numPages={numPages}
+                scale={scale}
+                dark={dark}
+                initialPage={page}
+                onPage={setPage}
+              />
+            ) : (
+              <PdfPageView
+                doc={doc}
+                page={page}
+                scale={scale}
+                dark={dark}
+                highlights={highlights}
+                activeId={activeHighlight?.id ?? null}
+                tool={tool}
+                onCreate={createHighlight}
+                onOpen={setActiveHighlight}
+              />
+            )}
+          </div>
         </div>
 
         {activeHighlight ? (

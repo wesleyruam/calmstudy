@@ -46,6 +46,7 @@ export function PdfPageView({
   dark,
   highlights,
   activeId,
+  tool,
   onCreate,
   onOpen,
 }: {
@@ -55,6 +56,8 @@ export function PdfPageView({
   dark: boolean;
   highlights: HighlightDTO[];
   activeId: string | null;
+  // "select" = mostra o popup de cores; uma categoria = caneta ativa (destaca direto).
+  tool: "select" | HighlightCategory;
   onCreate: (h: NewHighlight) => void;
   onOpen: (h: HighlightDTO) => void;
 }) {
@@ -128,21 +131,18 @@ export function PdfPageView({
     };
   }, [doc, page, scale]);
 
-  // Captura a seleção do usuário na camada de texto e abre a toolbar.
-  const handleSelection = useCallback(() => {
+  // Calcula a seleção atual na camada de texto (ou null).
+  const computeSelection = useCallback((): SelectionState | null => {
     const container = containerRef.current;
     const textLayerEl = textLayerRef.current;
-    if (!container || !textLayerEl) return;
+    if (!container || !textLayerEl) return null;
     const selection = window.getSelection();
-    if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
-      setSel(null);
-      return;
-    }
+    if (!selection || selection.isCollapsed || selection.rangeCount === 0) return null;
     const range = selection.getRangeAt(0);
-    if (!textLayerEl.contains(range.commonAncestorContainer)) return;
+    if (!textLayerEl.contains(range.commonAncestorContainer)) return null;
 
     const box = container.getBoundingClientRect();
-    if (box.width === 0 || box.height === 0) return;
+    if (box.width === 0 || box.height === 0) return null;
     const rects: HighlightRect[] = Array.from(range.getClientRects())
       .filter((r) => r.width > 1 && r.height > 1)
       .map((r) => ({
@@ -152,22 +152,26 @@ export function PdfPageView({
         h: r.height / box.height,
       }));
     const text = selection.toString().trim();
-    if (rects.length === 0 || text.length === 0) {
-      setSel(null);
-      return;
-    }
     const first = rects[0];
-    if (!first) {
+    if (rects.length === 0 || text.length === 0 || !first) return null;
+    return { left: first.x * box.width, top: first.y * box.height, text, rects };
+  }, []);
+
+  // Ao soltar o mouse: com caneta ativa, destaca direto; senão abre o popup de cores.
+  const handleSelection = useCallback(() => {
+    const s = computeSelection();
+    if (!s) {
       setSel(null);
       return;
     }
-    setSel({
-      left: first.x * box.width,
-      top: first.y * box.height,
-      text,
-      rects,
-    });
-  }, []);
+    if (tool === "select") {
+      setSel(s);
+    } else {
+      onCreate({ text: s.text, page, category: tool, anchor: { page, rects: s.rects } });
+      window.getSelection()?.removeAllRanges();
+      setSel(null);
+    }
+  }, [computeSelection, tool, onCreate, page]);
 
   const create = (category: HighlightCategory) => {
     if (!sel) return;
