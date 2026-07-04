@@ -11,6 +11,9 @@ import {
   ChartColumn,
   History,
   Folder,
+  CircleHelp,
+  PencilOff,
+  Clock,
   type LucideIcon,
 } from "lucide-react";
 import { getShelves } from "@/lib/shelves";
@@ -22,6 +25,13 @@ const FILTERS: { href: string; icon: LucideIcon; label: string; key: string }[] 
   { href: "/?filter=favorites", icon: Star, label: "Favoritos", key: "favorites" },
   { href: "/?filter=finished", icon: CircleCheck, label: "Concluídos", key: "finished" },
   { href: "/?filter=recent", icon: Download, label: "Importados", key: "recent" },
+];
+
+// Biblioteca inteligente (módulo 21): coleções dinâmicas por estado de estudo.
+const SMART_FILTERS: { href: string; icon: LucideIcon; label: string; key: string }[] = [
+  { href: "/?filter=questions", icon: CircleHelp, label: "Com dúvidas", key: "questions" },
+  { href: "/?filter=unannotated", icon: PencilOff, label: "Sem anotações", key: "unannotated" },
+  { href: "/?filter=review", icon: Clock, label: "Revisão pendente", key: "review" },
 ];
 
 export async function Sidebar({
@@ -47,6 +57,25 @@ export async function Sidebar({
             />
           ))}
         </ul>
+
+        <div>
+          <div className="mb-1 px-3">
+            <span className="text-xs font-medium uppercase tracking-wide text-[var(--color-ink-soft)]">
+              Coleções inteligentes
+            </span>
+          </div>
+          <ul className="flex flex-col gap-0.5">
+            {SMART_FILTERS.map((item) => (
+              <SideLink
+                key={item.key}
+                href={item.href}
+                icon={item.icon}
+                label={item.label}
+                active={!activeShelf && activeFilter === item.key}
+              />
+            ))}
+          </ul>
+        </div>
 
         <div>
           <div className="mb-1 px-3">

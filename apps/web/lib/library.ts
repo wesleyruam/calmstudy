@@ -23,7 +23,11 @@ export type LibraryFilter =
   | "reading"
   | "finished"
   | "favorites"
-  | "recent";
+  | "recent"
+  // biblioteca inteligente (módulo 21)
+  | "questions"
+  | "unannotated"
+  | "review";
 
 export const FILTER_LABELS: Record<LibraryFilter, string> = {
   all: "Biblioteca",
@@ -31,6 +35,9 @@ export const FILTER_LABELS: Record<LibraryFilter, string> = {
   finished: "Concluídos",
   favorites: "Favoritos",
   recent: "Importados Recentemente",
+  questions: "Com dúvidas",
+  unannotated: "Sem anotações",
+  review: "Revisão pendente",
 };
 
 function whereFor(userId: string, filter: LibraryFilter, shelfId?: string): Prisma.UserBookWhereInput {
@@ -51,6 +58,19 @@ function whereFor(userId: string, filter: LibraryFilter, shelfId?: string): Pris
       base.createdAt = { gte: since };
       break;
     }
+    // livros que têm ao menos um destaque marcado como dúvida
+    case "questions":
+      base.highlights = { some: { category: "QUESTION" } };
+      break;
+    // livros sem nenhum destaque nem nota — pedindo estudo
+    case "unannotated":
+      base.highlights = { none: {} };
+      base.notes = { none: {} };
+      break;
+    // livros com destaques aguardando revisão
+    case "review":
+      base.highlights = { some: { reviewStatus: "PENDING" } };
+      break;
     case "all":
       break;
   }

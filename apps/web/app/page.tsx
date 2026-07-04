@@ -9,7 +9,16 @@ import { getShelves } from "@/lib/shelves";
 
 export const dynamic = "force-dynamic";
 
-const VALID_FILTERS: LibraryFilter[] = ["all", "reading", "finished", "favorites", "recent"];
+const VALID_FILTERS: LibraryFilter[] = [
+  "all",
+  "reading",
+  "finished",
+  "favorites",
+  "recent",
+  "questions",
+  "unannotated",
+  "review",
+];
 
 export default async function LibraryPage({
   searchParams,
@@ -67,8 +76,18 @@ export default async function LibraryPage({
 
 function emptyHint(filter: LibraryFilter, shelf: boolean): string {
   if (shelf) return "Nenhum livro nesta prateleira ainda.";
-  if (filter === "all") return "Tudo respira. Comece importando um documento.";
-  return "Nada por aqui ainda.";
+  switch (filter) {
+    case "all":
+      return "Tudo respira. Comece importando um documento.";
+    case "questions":
+      return "Nenhuma dúvida pendente nos seus livros.";
+    case "unannotated":
+      return "Todos os seus livros já têm anotações.";
+    case "review":
+      return "Nada aguardando revisão.";
+    default:
+      return "Nada por aqui ainda.";
+  }
 }
 
 function EmptyState({ filter, shelf }: { filter: LibraryFilter; shelf: boolean }) {
