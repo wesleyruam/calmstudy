@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Notebook, ArrowLeft } from "lucide-react";
+import { Notebook, ArrowLeft, Download } from "lucide-react";
 import { formatDuration, type DashboardData, type GoalDTO, type TaskDTO } from "@/lib/dashboard-shared";
 
 export function BookDashboard({ data }: { data: DashboardData }) {
@@ -112,6 +112,7 @@ export function BookDashboard({ data }: { data: DashboardData }) {
               >
                 <Notebook className="size-4" /> Caderno
               </Link>
+              <ExportMenu userBookId={data.userBookId} />
             </div>
           </div>
         </div>
@@ -188,6 +189,42 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
       <p className={["mt-0.5 text-lg font-medium tabular-nums", accent ? "text-[var(--color-accent)]" : ""].join(" ")}>
         {value}
       </p>
+    </div>
+  );
+}
+
+// Exportação (módulo 25): baixa o material de estudo do livro.
+const EXPORT_FORMATS: { fmt: string; label: string }[] = [
+  { fmt: "md", label: "Markdown" },
+  { fmt: "html", label: "HTML" },
+  { fmt: "json", label: "JSON" },
+];
+
+function ExportMenu({ userBookId }: { userBookId: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        className="flex items-center gap-1.5 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-1.5 transition-colors hover:bg-[var(--color-line)]/40"
+      >
+        <Download className="size-4" /> Exportar
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full z-10 mt-1 w-40 overflow-hidden rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] py-1 shadow-[var(--shadow-calm)]">
+          {EXPORT_FORMATS.map((f) => (
+            <a
+              key={f.fmt}
+              href={`/api/userbooks/${userBookId}/export?format=${f.fmt}`}
+              download
+              className="block px-3 py-1.5 text-sm text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/50 hover:text-[var(--color-ink)]"
+            >
+              {f.label}
+            </a>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
