@@ -4,13 +4,13 @@ import { getOrCreateDefaultUser, enqueueDocument } from "@calmstudy/infra";
 
 export const runtime = "nodejs";
 
-// Enfileira a geração de capa (coverOnly) para PDFs já importados que ainda não têm capa.
-// Usado uma vez para "acender" as capas dos livros antigos.
+// Enfileira a geração de capa (coverOnly) para livros já importados sem capa.
+// Cobre PDF (render), EPUB/CBZ (imagem embutida) e MOBI (EXTH, best-effort).
 export async function POST() {
   const user = await getOrCreateDefaultUser();
   const books = await prisma.book.findMany({
     where: {
-      format: "PDF",
+      format: { in: ["PDF", "EPUB", "MOBI", "CBZ"] },
       coverUrl: null,
       status: "READY",
       userBooks: { some: { userId: user.id } },
