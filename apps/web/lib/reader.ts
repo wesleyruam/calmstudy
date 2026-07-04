@@ -12,6 +12,9 @@ export interface ReaderData {
   lastPage: number;
   zoom: number | null;
   viewMode: string | null;
+  // visão geral (coluna esquerda da bancada de leitura)
+  totalSeconds: number;
+  conceptCount: number;
 }
 
 /** Dados para abrir um documento no leitor — só do dono (foco single-user até a auth). */
@@ -23,6 +26,11 @@ export async function getReaderData(userBookId: string): Promise<ReaderData | nu
   });
   if (!ub || ub.book.status !== "READY") return null;
 
+  const [sessionAgg, conceptCount] = await Promise.all([
+    prisma.studySession.aggregate({ where: { userBookId }, _sum: { seconds: true } }),
+    prisma.conceptBook.count({ where: { userBookId } }),
+  ]);
+
   return {
     userBookId: ub.id,
     title: ub.book.title,
@@ -33,5 +41,7 @@ export async function getReaderData(userBookId: string): Promise<ReaderData | nu
     lastPage: ub.lastPage,
     zoom: ub.zoom,
     viewMode: ub.viewMode,
+    totalSeconds: sessionAgg._sum.seconds ?? 0,
+    conceptCount,
   };
 }

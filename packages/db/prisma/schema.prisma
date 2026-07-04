@@ -267,6 +267,11 @@ model Highlight {
   @@index([searchTsv], type: Gin)
 }
 
+enum NoteKind {
+  NOTE
+  QUESTION
+}
+
 // Nota Rich Text (módulo 2) — corpo em JSON (TipTap). Pode estar:
 //  - ancorada a um highlight (highlightId),
 //  - ligada a um livro sem highlight (userBookId, ex. resumo/marginalia),
@@ -279,6 +284,7 @@ model Note {
   conceptId   String?
   page        Int?
   position    Json? // {x,y} fração da página (marginalia)
+  kind        NoteKind @default(NOTE) // nota livre ou pergunta (leitor, painel da página)
   title       String?
   content     Json     @default("{}") // documento TipTap (JSON)
   contentText String? // projeção texto puro p/ busca (FTS)

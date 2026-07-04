@@ -10,8 +10,11 @@ import { HighlightPanel } from "@/components/highlight-panel";
 import { HighlightNotes } from "@/components/highlight-notes";
 import { BookmarksControl } from "@/components/bookmarks-control";
 import { StudySessionTracker } from "@/components/study-session-tracker";
-import { Notebook, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { ReaderRail } from "@/components/reader-rail";
+import { ReaderPagePanel, type PanelTab } from "@/components/reader-page-panel";
+import { Notebook, ArrowLeft, ChevronLeft, ChevronRight, PanelRight } from "lucide-react";
 import type { HighlightDTO } from "@/lib/highlight-shared";
+import type { NoteDTO } from "@/lib/note-shared";
 
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3;
@@ -31,6 +34,9 @@ export function PdfReader({ data }: { data: ReaderData }) {
   const [dark, setDark] = useState(false);
   const [highlights, setHighlights] = useState<HighlightDTO[]>([]);
   const [activeHighlight, setActiveHighlight] = useState<HighlightDTO | null>(null);
+  const [notes, setNotes] = useState<NoteDTO[]>([]);
+  const [panelTab, setPanelTab] = useState<PanelTab>("content");
+  const [panelOpen, setPanelOpen] = useState(true);
 
   // Acompanha o tema (classe .dark no <html>) para inverter o PDF no modo escuro,
   // fazendo a página se fundir com o fundo do leitor.
@@ -86,6 +92,20 @@ export function PdfReader({ data }: { data: ReaderData }) {
     };
   }, [data.userBookId]);
 
+  // Carrega as notas do livro (para o painel de contexto por página).
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/notes?userBookId=${data.userBookId}`)
+      .then((r) => (r.ok ? r.json() : { notes: [] }))
+      .then((d) => {
+        if (!cancelled) setNotes(d.notes ?? []);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [data.userBookId]);
+
   const createHighlight = useCallback(
     async (h: NewHighlight) => {
       const res = await fetch(`/api/userbooks/${data.userBookId}/highlights`, {
@@ -97,9 +117,40 @@ export function PdfReader({ data }: { data: ReaderData }) {
       const { highlight } = await res.json();
       setHighlights((prev) => [...prev, highlight]);
       setActiveHighlight(highlight);
+      setPanelOpen(true);
     },
     [data.userBookId],
   );
+
+  // Cria nota/pergunta ancorada ao livro + página atual (painel da página).
+  const createNote = useCallback(
+    async (kind: "NOTE" | "QUESTION", text: string) => {
+      const content = {
+        type: "doc",
+        content: [{ type: "paragraph", content: text ? [{ type: "text", text }] : [] }],
+      };
+      const res = await fetch(`/api/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userBookId: data.userBookId, page, kind, content, contentText: text }),
+      });
+      if (!res.ok) return;
+      const { note } = await res.json();
+      setNotes((prev) => [note, ...prev]);
+    },
+    [data.userBookId, page],
+  );
+
+  const deleteNote = useCallback(async (id: string) => {
+    const res = await fetch(`/api/notes/${id}`, { method: "DELETE" });
+    if (res.ok) setNotes((prev) => prev.filter((n) => n.id !== id));
+  }, []);
+
+  const openTool = useCallback((t: PanelTab) => {
+    setActiveHighlight(null);
+    setPanelTab(t);
+    setPanelOpen(true);
+  }, []);
 
   const updateHighlight = useCallback((h: HighlightDTO) => {
     setHighlights((prev) => prev.map((x) => (x.id === h.id ? h : x)));
@@ -154,6 +205,17 @@ export function PdfReader({ data }: { data: ReaderData }) {
   const zoom = (d: number) =>
     setScale((s) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, Math.round((s + d) * 10) / 10)));
 
+  // Escopo por página + contadores da visão geral.
+  const pageHighlights = highlights.filter((h) => (h.page ?? h.anchor?.page) === page);
+  const standaloneNotes = notes.filter((n) => !n.highlightId && !n.isFreePage);
+  const pageNotes = standaloneNotes.filter((n) => n.page === page);
+  const counts = {
+    highlights: highlights.length,
+    notes: standaloneNotes.filter((n) => n.kind === "NOTE").length,
+    questions: standaloneNotes.filter((n) => n.kind === "QUESTION").length,
+    concepts: data.conceptCount,
+  };
+
   return (
     <div className="flex min-h-dvh flex-col bg-[var(--color-paper)]">
       <StudySessionTracker userBookId={data.userBookId} page={page} />
@@ -205,10 +267,32 @@ export function PdfReader({ data }: { data: ReaderData }) {
             +
           </button>
         </div>
+
+        <button
+          onClick={() => setPanelOpen((v) => !v)}
+          className={[
+            "grid size-8 place-items-center rounded-full transition-colors hover:bg-[var(--color-line)]/60",
+            panelOpen ? "text-[var(--color-ink)]" : "text-[var(--color-ink-soft)]",
+          ].join(" ")}
+          title="Painel da página"
+          aria-label="Alternar painel da página"
+        >
+          <PanelRight className="size-4" />
+        </button>
       </header>
 
-      {/* área de leitura + painel de anotação */}
+      {/* bancada: ferramentas | página | painel de contexto */}
       <div className="flex flex-1 overflow-hidden">
+        <ReaderRail
+          userBookId={data.userBookId}
+          page={page}
+          numPages={numPages}
+          totalSeconds={data.totalSeconds}
+          counts={counts}
+          activeTab={panelTab}
+          onTool={openTool}
+        />
+
         <div className="flex flex-1 justify-center overflow-auto px-4 py-8">
           {error ? (
             <p className="mt-20 text-sm text-[var(--color-ink-soft)]">{error}</p>
@@ -240,7 +324,7 @@ export function PdfReader({ data }: { data: ReaderData }) {
           )}
         </div>
 
-        {activeHighlight && (
+        {activeHighlight ? (
           <HighlightPanel
             key={activeHighlight.id}
             highlight={activeHighlight}
@@ -250,6 +334,20 @@ export function PdfReader({ data }: { data: ReaderData }) {
           >
             <HighlightNotes highlightId={activeHighlight.id} />
           </HighlightPanel>
+        ) : (
+          panelOpen && (
+            <ReaderPagePanel
+              page={page}
+              highlights={pageHighlights}
+              notes={pageNotes}
+              tab={panelTab}
+              onTab={setPanelTab}
+              onOpenHighlight={setActiveHighlight}
+              onCreateNote={createNote}
+              onDeleteNote={deleteNote}
+              onClose={() => setPanelOpen(false)}
+            />
+          )
         )}
       </div>
 

@@ -3,11 +3,14 @@
 // Documento TipTap (JSON do ProseMirror). Estrutura livre — tipamos como unknown.
 export type TiptapDoc = { type: "doc"; content?: unknown[] } | Record<string, unknown>;
 
+export type NoteKind = "NOTE" | "QUESTION";
+
 export interface NoteDTO {
   id: string;
   highlightId: string | null;
   userBookId: string | null;
   page: number | null;
+  kind: NoteKind;
   title: string | null;
   content: TiptapDoc;
   contentText: string | null;
@@ -23,6 +26,7 @@ interface NoteRow {
   highlightId: string | null;
   userBookId: string | null;
   page: number | null;
+  kind?: string;
   title: string | null;
   content: unknown;
   contentText: string | null;
@@ -39,6 +43,7 @@ export function serializeNote(n: NoteRow): NoteDTO {
     highlightId: n.highlightId,
     userBookId: n.userBookId,
     page: n.page,
+    kind: (n.kind as NoteKind) ?? "NOTE",
     title: n.title,
     content: (n.content ?? { type: "doc" }) as TiptapDoc,
     contentText: n.contentText,

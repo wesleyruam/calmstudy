@@ -10,6 +10,7 @@ const CreateSchema = z.object({
   highlightId: z.string().uuid().optional(),
   userBookId: z.string().uuid().optional(),
   page: z.number().int().min(1).optional(),
+  kind: z.enum(["NOTE", "QUESTION"]).optional(),
   title: z.string().max(300).optional(),
   content: z.record(z.string(), z.unknown()).optional(),
   contentText: z.string().optional(),
