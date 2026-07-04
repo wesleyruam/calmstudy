@@ -15,6 +15,7 @@ export interface LibraryItem {
   favorite: boolean;
   rating: number | null;
   shelfIds: string[];
+  tagIds: string[];
   coverUrl: string | null;
 }
 
@@ -40,9 +41,15 @@ export const FILTER_LABELS: Record<LibraryFilter, string> = {
   review: "Revisão pendente",
 };
 
-function whereFor(userId: string, filter: LibraryFilter, shelfId?: string): Prisma.UserBookWhereInput {
+function whereFor(
+  userId: string,
+  filter: LibraryFilter,
+  shelfId?: string,
+  tagId?: string,
+): Prisma.UserBookWhereInput {
   const base: Prisma.UserBookWhereInput = { userId, deletedAt: null };
   if (shelfId) base.shelves = { some: { shelfId } };
+  if (tagId) base.tags = { some: { tagId } };
   switch (filter) {
     case "reading":
       base.status = "READING";
@@ -81,11 +88,16 @@ function whereFor(userId: string, filter: LibraryFilter, shelfId?: string): Pris
 export async function getLibrary(
   filter: LibraryFilter = "all",
   shelfId?: string,
+  tagId?: string,
 ): Promise<LibraryItem[]> {
   const user = await getOrCreateDefaultUser();
   const items = await prisma.userBook.findMany({
-    where: whereFor(user.id, filter, shelfId),
-    include: { book: true, shelves: { select: { shelfId: true } } },
+    where: whereFor(user.id, filter, shelfId, tagId),
+    include: {
+      book: true,
+      shelves: { select: { shelfId: true } },
+      tags: { select: { tagId: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -101,6 +113,7 @@ export async function getLibrary(
     favorite: ub.favorite,
     rating: ub.rating,
     shelfIds: ub.shelves.map((s) => s.shelfId),
+    tagIds: ub.tags.map((t) => t.tagId),
     coverUrl: ub.book.coverUrl,
   }));
 }

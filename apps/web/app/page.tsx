@@ -6,6 +6,7 @@ import { UploadButton, DropOverlay } from "@/components/uploader";
 import { LibraryRefresher } from "@/components/library-refresher";
 import { getLibrary, FILTER_LABELS, type LibraryFilter } from "@/lib/library";
 import { getShelves } from "@/lib/shelves";
+import { getBookTags } from "@/lib/book-tags";
 
 export const dynamic = "force-dynamic";
 
@@ -23,21 +24,32 @@ const VALID_FILTERS: LibraryFilter[] = [
 export default async function LibraryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string; shelf?: string }>;
+  searchParams: Promise<{ filter?: string; shelf?: string; tag?: string }>;
 }) {
   const sp = await searchParams;
   const shelfId = sp.shelf;
+  const tagId = !shelfId ? sp.tag : undefined;
   const filter: LibraryFilter =
-    !shelfId && sp.filter && VALID_FILTERS.includes(sp.filter as LibraryFilter)
+    !shelfId && !tagId && sp.filter && VALID_FILTERS.includes(sp.filter as LibraryFilter)
       ? (sp.filter as LibraryFilter)
       : "all";
 
-  const [items, shelves] = await Promise.all([getLibrary(filter, shelfId), getShelves()]);
+  const [items, shelves, bookTags] = await Promise.all([
+    getLibrary(filter, shelfId, tagId),
+    getShelves(),
+    getBookTags(),
+  ]);
   const shelfOptions = shelves.map((s) => ({ id: s.id, name: s.name }));
+  const tagOptions = bookTags.map((t) => ({ id: t.id, name: t.name }));
   const processing = items.some((i) => i.status === "PROCESSING");
 
   const activeShelf = shelfId ? shelves.find((s) => s.id === shelfId) : undefined;
-  const heading = activeShelf ? activeShelf.name : FILTER_LABELS[filter];
+  const activeTag = tagId ? bookTags.find((t) => t.id === tagId) : undefined;
+  const heading = activeShelf
+    ? activeShelf.name
+    : activeTag
+      ? `#${activeTag.name}`
+      : FILTER_LABELS[filter];
 
   return (
     <div className="min-h-dvh">
@@ -45,7 +57,7 @@ export default async function LibraryPage({
       <DropOverlay />
       <LibraryRefresher active={processing} />
       <div className="mx-auto flex max-w-[1400px]">
-        <Sidebar activeFilter={filter} activeShelf={shelfId} />
+        <Sidebar activeFilter={filter} activeShelf={shelfId} activeTag={tagId} />
         <main className="flex-1 px-6 py-10 md:px-10">
           <div className="mb-8 flex items-end justify-between gap-4">
             <div>
@@ -53,18 +65,20 @@ export default async function LibraryPage({
               <p className="mt-1 text-sm text-[var(--color-ink-soft)]">
                 {items.length
                   ? `${items.length} ${items.length === 1 ? "documento" : "documentos"}`
-                  : emptyHint(filter, !!activeShelf)}
+                  : activeTag
+                    ? "Nenhum livro com esta tag."
+                    : emptyHint(filter, !!activeShelf)}
               </p>
             </div>
             {items.length > 0 && <UploadButton label="Importar" variant="ghost" />}
           </div>
 
           {items.length === 0 ? (
-            <EmptyState filter={filter} shelf={!!activeShelf} />
+            <EmptyState filter={filter} shelf={!!activeShelf || !!activeTag} />
           ) : (
             <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {items.map((item) => (
-                <BookCard key={item.userBookId} item={item} shelves={shelfOptions} />
+                <BookCard key={item.userBookId} item={item} shelves={shelfOptions} tags={tagOptions} />
               ))}
             </div>
           )}

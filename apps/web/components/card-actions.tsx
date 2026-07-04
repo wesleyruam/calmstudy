@@ -9,7 +9,12 @@ export interface ShelfOption {
   name: string;
 }
 
-// Ações no card: favoritar (estrela) + menu ⋯ (renomear, prateleiras, excluir).
+export interface TagOption {
+  id: string;
+  name: string;
+}
+
+// Ações no card: favoritar (estrela) + menu ⋯ (renomear, prateleiras, tags, excluir).
 export function CardActions({
   userBookId,
   bookId,
@@ -17,6 +22,8 @@ export function CardActions({
   initialFavorite,
   initialShelfIds,
   shelves,
+  initialTags,
+  tags,
 }: {
   userBookId: string;
   bookId: string;
@@ -24,11 +31,51 @@ export function CardActions({
   initialFavorite: boolean;
   initialShelfIds: string[];
   shelves: ShelfOption[];
+  initialTags: TagOption[];
+  tags: TagOption[];
 }) {
   const router = useRouter();
   const [favorite, setFavorite] = useState(initialFavorite);
   const [shelfIds, setShelfIds] = useState<string[]>(initialShelfIds);
+  const [bookTags, setBookTags] = useState<TagOption[]>(initialTags);
+  const [tagInput, setTagInput] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Envia o conjunto desejado de tags (por nome) e reflete a resposta autoritativa.
+  const applyTags = async (names: string[]) => {
+    const prev = bookTags;
+    try {
+      const res = await fetch(`/api/userbooks/${userBookId}/tags`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tags: names }),
+      });
+      if (!res.ok) throw new Error();
+      const { tags: next } = await res.json();
+      setBookTags(next);
+      router.refresh();
+    } catch {
+      setBookTags(prev);
+    }
+  };
+
+  const toggleTag = (e: React.MouseEvent, tag: TagOption) => {
+    e.preventDefault();
+    const on = bookTags.some((t) => t.id === tag.id);
+    const names = on
+      ? bookTags.filter((t) => t.id !== tag.id).map((t) => t.name)
+      : [...bookTags.map((t) => t.name), tag.name];
+    setBookTags((cur) => (on ? cur.filter((t) => t.id !== tag.id) : [...cur, tag]));
+    void applyTags(names);
+  };
+
+  const addTag = (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = tagInput.trim().replace(/^#/, "").trim();
+    setTagInput("");
+    if (!name || bookTags.some((t) => t.name.toLowerCase() === name.toLowerCase())) return;
+    void applyTags([...bookTags.map((t) => t.name), name]);
+  };
 
   const stop = (e: React.MouseEvent) => e.preventDefault();
 
@@ -169,6 +216,33 @@ export function CardActions({
                 })}
               </>
             )}
+
+            <div className="px-2.5 pb-1 pt-2 text-[11px] font-medium uppercase tracking-wide text-[var(--color-ink-soft)]">
+              Tags
+            </div>
+            {tags.map((tag) => {
+              const on = bookTags.some((t) => t.id === tag.id);
+              return (
+                <button
+                  key={tag.id}
+                  onClick={(e) => toggleTag(e, tag)}
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors hover:bg-[var(--color-line)]/50"
+                >
+                  <span className="grid w-4 place-items-center text-[var(--color-accent)]">
+                    {on ? <Check className="size-4" /> : null}
+                  </span>
+                  <span className="flex-1 truncate">#{tag.name}</span>
+                </button>
+              );
+            })}
+            <form onSubmit={addTag} className="px-1.5 py-1">
+              <input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                placeholder="+ nova tag"
+                className="w-full rounded-lg border border-[var(--color-line)] bg-transparent px-2 py-1 text-xs outline-none focus:border-[var(--color-accent)]"
+              />
+            </form>
 
             <div className="my-1 border-t border-[var(--color-line)]" />
             <MenuItem onClick={remove} danger>

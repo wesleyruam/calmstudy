@@ -14,9 +14,11 @@ import {
   CircleHelp,
   PencilOff,
   Clock,
+  Hash,
   type LucideIcon,
 } from "lucide-react";
 import { getShelves } from "@/lib/shelves";
+import { getBookTags } from "@/lib/book-tags";
 import { NewShelfButton } from "@/components/new-shelf-button";
 
 const FILTERS: { href: string; icon: LucideIcon; label: string; key: string }[] = [
@@ -37,11 +39,13 @@ const SMART_FILTERS: { href: string; icon: LucideIcon; label: string; key: strin
 export async function Sidebar({
   activeFilter = "all",
   activeShelf,
+  activeTag,
 }: {
   activeFilter?: string;
   activeShelf?: string;
+  activeTag?: string;
 }) {
-  const shelves = await getShelves();
+  const [shelves, tags] = await Promise.all([getShelves(), getBookTags()]);
 
   return (
     <aside className="hidden w-60 shrink-0 border-r border-[var(--color-line)] px-3 py-6 md:block">
@@ -118,6 +122,28 @@ export async function Sidebar({
             ))}
           </ul>
         </div>
+
+        {tags.length > 0 && (
+          <div>
+            <div className="mb-1 px-3">
+              <span className="text-xs font-medium uppercase tracking-wide text-[var(--color-ink-soft)]">
+                Tags
+              </span>
+            </div>
+            <ul className="flex flex-col gap-0.5">
+              {tags.map((tag) => (
+                <SideLink
+                  key={tag.id}
+                  href={`/?tag=${tag.id}`}
+                  icon={Hash}
+                  label={tag.name}
+                  count={tag.count}
+                  active={activeTag === tag.id}
+                />
+              ))}
+            </ul>
+          </div>
+        )}
       </nav>
     </aside>
   );
