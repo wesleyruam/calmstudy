@@ -104,9 +104,13 @@ model Book {
   textContent String? // texto extraído (FTS) — mover p/ tabela à parte se crescer
   createdAt   DateTime   @default(now())
 
+  // Coluna gerada (STORED) mantida pelo Postgres — ver migration search_fts.
+  searchTsv Unsupported("tsvector")? @map("search_tsv")
+
   userBooks UserBook[]
 
   @@index([isbn])
+  @@index([searchTsv], type: Gin)
 }
 
 // A relação do usuário com o livro (estado pessoal + preferências de leitura).
@@ -246,6 +250,8 @@ model Highlight {
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
 
+  searchTsv Unsupported("tsvector")? @map("search_tsv")
+
   userBook UserBook           @relation(fields: [userBookId], references: [id], onDelete: Cascade)
   notes    Note[]
   tags     HighlightTag[]
@@ -254,6 +260,7 @@ model Highlight {
   @@index([userBookId])
   @@index([userBookId, category])
   @@index([userBookId, reviewStatus])
+  @@index([searchTsv], type: Gin)
 }
 
 // Nota Rich Text (módulo 2) — corpo em JSON (TipTap). Pode estar:
@@ -276,6 +283,8 @@ model Note {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  searchTsv Unsupported("tsvector")? @map("search_tsv")
+
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   userBook  UserBook?  @relation(fields: [userBookId], references: [id], onDelete: Cascade)
   highlight Highlight? @relation(fields: [highlightId], references: [id], onDelete: Cascade)
@@ -286,6 +295,7 @@ model Note {
   @@index([userBookId])
   @@index([highlightId])
   @@index([conceptId])
+  @@index([searchTsv], type: Gin)
 }
 
 // ── Junções de tag (módulo 6) ──
@@ -353,6 +363,8 @@ model Concept {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  searchTsv Unsupported("tsvector")? @map("search_tsv")
+
   user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   tags       ConceptTag[]
   books      ConceptBook[]
@@ -363,6 +375,7 @@ model Concept {
 
   @@unique([userId, title])
   @@index([userId])
+  @@index([searchTsv], type: Gin)
 }
 
 // Link entre conceitos (módulo 8): a aresta da wiki pessoal.
@@ -469,7 +482,10 @@ model Summary {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  searchTsv Unsupported("tsvector")? @map("search_tsv")
+
   userBook UserBook @relation(fields: [userBookId], references: [id], onDelete: Cascade)
 
   @@index([userBookId])
+  @@index([searchTsv], type: Gin)
 }

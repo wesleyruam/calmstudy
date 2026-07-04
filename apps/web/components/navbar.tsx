@@ -13,10 +13,19 @@ export function Navbar() {
           <span className="font-serif text-lg tracking-tight">CalmStudy</span>
         </div>
 
-        <div className="mx-auto flex w-full max-w-md items-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm text-[var(--color-ink-soft)] shadow-[var(--shadow-calm)]">
+        <form
+          action="/busca"
+          className="mx-auto flex w-full max-w-md items-center gap-2 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm text-[var(--color-ink-soft)] shadow-[var(--shadow-calm)] transition-colors focus-within:border-[var(--color-accent)]"
+        >
           <SearchGlyph />
-          <span>Buscar livros, autores, notas…</span>
-        </div>
+          <input
+            name="q"
+            type="search"
+            placeholder="Buscar livros, autores, notas…"
+            aria-label="Buscar"
+            className="w-full bg-transparent text-[var(--color-ink)] outline-none placeholder:text-[var(--color-ink-soft)]"
+          />
+        </form>
 
         <nav className="flex items-center gap-1.5">
           <UploadButton label="Upload" variant="ghost" />
