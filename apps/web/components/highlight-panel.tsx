@@ -90,7 +90,7 @@ export function HighlightPanel({
   const meta = CATEGORY_META[highlight.category];
 
   return (
-    <aside className="flex h-full w-80 shrink-0 flex-col border-l border-[var(--color-line)] bg-[var(--color-surface)]">
+    <aside className="flex h-full w-96 shrink-0 flex-col border-l border-[var(--color-line)] bg-[var(--color-surface)]">
       {/* cabeçalho */}
       <div className="flex items-center gap-2 border-b border-[var(--color-line)] px-4 py-3">
         <span
@@ -228,7 +228,7 @@ export function HighlightPanel({
             onChange={(e) => saveObservation(e.target.value)}
             rows={2}
             placeholder="uma nota curta…"
-            className="w-full resize-none rounded-lg border border-[var(--color-line)] bg-transparent px-2 py-1.5 text-sm outline-none focus:border-[var(--color-accent)]"
+            className="max-h-80 min-h-[3rem] w-full resize-y rounded-lg border border-[var(--color-line)] bg-transparent px-2 py-1.5 text-sm outline-none focus:border-[var(--color-accent)]"
           />
         </Field>
 

@@ -217,7 +217,7 @@ export function PdfReader({ data }: { data: ReaderData }) {
   };
 
   return (
-    <div className="flex min-h-dvh flex-col bg-[var(--color-paper)]">
+    <div className="flex h-dvh flex-col overflow-hidden bg-[var(--color-paper)]">
       <StudySessionTracker userBookId={data.userBookId} page={page} />
       {/* barra superior */}
       <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-[var(--color-line)] bg-[var(--color-paper)]/80 px-4 backdrop-blur-xl">
@@ -282,7 +282,7 @@ export function PdfReader({ data }: { data: ReaderData }) {
       </header>
 
       {/* bancada: ferramentas | página | painel de contexto */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         <ReaderRail
           userBookId={data.userBookId}
           page={page}
@@ -293,7 +293,7 @@ export function PdfReader({ data }: { data: ReaderData }) {
           onTool={openTool}
         />
 
-        <div className="flex flex-1 justify-center overflow-auto px-4 py-8">
+        <div className="flex min-h-0 min-w-0 flex-1 justify-center overflow-auto px-4 py-8">
           {error ? (
             <p className="mt-20 text-sm text-[var(--color-ink-soft)]">{error}</p>
           ) : loading || !doc ? (

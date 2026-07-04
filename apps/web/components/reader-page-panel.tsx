@@ -40,7 +40,7 @@ export function ReaderPagePanel({
   ];
 
   return (
-    <aside className="flex h-full w-80 shrink-0 flex-col border-l border-[var(--color-line)] bg-[var(--color-surface)]">
+    <aside className="flex h-full w-96 shrink-0 flex-col border-l border-[var(--color-line)] bg-[var(--color-surface)]">
       <div className="flex items-center gap-2 border-b border-[var(--color-line)] px-4 py-3">
         <span className="flex-1 text-sm font-medium">Página {page}</span>
         <button
@@ -202,7 +202,7 @@ function NoteComposer({
         }}
         rows={2}
         placeholder={placeholder}
-        className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-[var(--color-ink-soft)]"
+        className="max-h-80 min-h-[3.5rem] w-full resize-y bg-transparent text-sm outline-none placeholder:text-[var(--color-ink-soft)]"
       />
       <div className="mt-1 flex justify-end">
         <button
