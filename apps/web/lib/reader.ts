@@ -15,6 +15,7 @@ export interface ReaderData {
   // visão geral (coluna esquerda da bancada de leitura)
   totalSeconds: number;
   conceptCount: number;
+  concepts: { id: string; title: string; color: string }[];
 }
 
 /** Dados para abrir um documento no leitor — só do dono (foco single-user até a auth). */
@@ -26,9 +27,13 @@ export async function getReaderData(userBookId: string): Promise<ReaderData | nu
   });
   if (!ub || ub.book.status !== "READY") return null;
 
-  const [sessionAgg, conceptCount] = await Promise.all([
+  const [sessionAgg, conceptBooks] = await Promise.all([
     prisma.studySession.aggregate({ where: { userBookId }, _sum: { seconds: true } }),
-    prisma.conceptBook.count({ where: { userBookId } }),
+    prisma.conceptBook.findMany({
+      where: { userBookId },
+      include: { concept: { select: { id: true, title: true, color: true } } },
+      orderBy: { concept: { title: "asc" } },
+    }),
   ]);
 
   return {
@@ -42,6 +47,11 @@ export async function getReaderData(userBookId: string): Promise<ReaderData | nu
     zoom: ub.zoom,
     viewMode: ub.viewMode,
     totalSeconds: sessionAgg._sum.seconds ?? 0,
-    conceptCount,
+    conceptCount: conceptBooks.length,
+    concepts: conceptBooks.map((cb) => ({
+      id: cb.concept.id,
+      title: cb.concept.title,
+      color: cb.concept.color ?? "#94a3b8",
+    })),
   };
 }

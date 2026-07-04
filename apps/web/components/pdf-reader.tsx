@@ -13,7 +13,18 @@ import { StudySessionTracker } from "@/components/study-session-tracker";
 import { ReaderRail } from "@/components/reader-rail";
 import { ReaderPagePanel, type PanelTab } from "@/components/reader-page-panel";
 import { ReaderTools, type ReaderTool } from "@/components/reader-tools";
-import { Notebook, ArrowLeft, ChevronLeft, ChevronRight, PanelRight } from "lucide-react";
+import { ReaderFind } from "@/components/reader-find";
+import { ThemeToggle } from "@/components/theme-toggle";
+import {
+  Notebook,
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  PanelRight,
+  Search,
+  Maximize2,
+  Minimize2,
+} from "lucide-react";
 import type { HighlightDTO } from "@/lib/highlight-shared";
 import type { NoteDTO } from "@/lib/note-shared";
 
@@ -39,6 +50,24 @@ export function PdfReader({ data }: { data: ReaderData }) {
   const [panelTab, setPanelTab] = useState<PanelTab>("content");
   const [panelOpen, setPanelOpen] = useState(true);
   const [tool, setTool] = useState<ReaderTool>("select");
+  const [findOpen, setFindOpen] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+
+  const jumpTo = useCallback(
+    (p: number) => setPage(Math.min(Math.max(1, p), numPages || 1)),
+    [numPages],
+  );
+
+  // Tela cheia (Fase C): alterna e acompanha o estado real do documento.
+  const toggleFullscreen = useCallback(() => {
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+    else void document.documentElement.requestFullscreen().catch(() => {});
+  }, []);
+  useEffect(() => {
+    const sync = () => setFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  }, []);
 
   // Acompanha o tema (classe .dark no <html>) para inverter o PDF no modo escuro,
   // fazendo a página se fundir com o fundo do leitor.
@@ -230,70 +259,122 @@ export function PdfReader({ data }: { data: ReaderData }) {
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-[var(--color-paper)]">
       <StudySessionTracker userBookId={data.userBookId} page={page} />
-      {/* barra superior */}
-      <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-[var(--color-line)] bg-[var(--color-paper)]/80 px-4 backdrop-blur-xl">
-        <Link
-          href="/"
-          className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60"
-        >
-          <ArrowLeft className="size-4" /> Biblioteca
-        </Link>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{data.title}</p>
-          {data.author && (
-            <p className="truncate text-xs text-[var(--color-ink-soft)]">{data.author}</p>
-          )}
+      {/* barra superior: breadcrumb · navegação central · ferramentas */}
+      <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-[var(--color-line)] bg-[var(--color-paper)]/80 px-4 backdrop-blur-xl">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5">
+          <Link
+            href="/"
+            className="grid size-8 shrink-0 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60"
+            aria-label="Voltar à biblioteca"
+          >
+            <ArrowLeft className="size-4" />
+          </Link>
+          <nav className="flex min-w-0 items-center gap-1.5 text-sm">
+            <Link href="/" className="shrink-0 text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]">
+              Biblioteca
+            </Link>
+            <span className="shrink-0 text-[var(--color-ink-soft)]">/</span>
+            <span className="truncate font-medium">{data.title}</span>
+            {data.author && (
+              <span className="hidden truncate text-[var(--color-ink-soft)] sm:inline">· {data.author}</span>
+            )}
+          </nav>
         </div>
 
-        <Link
-          href={`/caderno/${data.userBookId}`}
-          className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60"
-          title="Caderno do livro"
-        >
-          <Notebook className="size-4" /> Caderno
-        </Link>
+        {/* navegação central de página */}
+        {mode === "single" && (
+          <div className="flex shrink-0 items-center gap-1 rounded-full border border-[var(--color-line)] px-1 py-0.5 text-sm">
+            <button
+              onClick={() => go(-1)}
+              disabled={page <= 1}
+              className="grid size-7 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60 disabled:opacity-30"
+              aria-label="Página anterior"
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            <span className="px-1 tabular-nums text-[var(--color-ink-soft)]">
+              <span className="font-medium text-[var(--color-ink)]">{page}</span> de {numPages || "…"}
+            </span>
+            <button
+              onClick={() => go(1)}
+              disabled={!!numPages && page >= numPages}
+              className="grid size-7 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60 disabled:opacity-30"
+              aria-label="Próxima página"
+            >
+              <ChevronRight className="size-4" />
+            </button>
+          </div>
+        )}
 
-        <BookmarksControl
-          userBookId={data.userBookId}
-          currentPage={page}
-          onJump={(p) => setPage(Math.min(Math.max(1, p), numPages || 1))}
-        />
-
-        <ModeToggle mode={mode} onChange={setMode} />
-
-        <div className="flex items-center gap-1 text-sm text-[var(--color-ink-soft)]">
+        <div className="flex flex-1 items-center justify-end gap-1">
           <button
-            onClick={() => zoom(-0.2)}
-            className="grid size-8 place-items-center rounded-full hover:bg-[var(--color-line)]/60"
-            aria-label="Diminuir zoom"
+            onClick={() => setFindOpen((v) => !v)}
+            className={[
+              "grid size-8 place-items-center rounded-full transition-colors hover:bg-[var(--color-line)]/60",
+              findOpen ? "bg-[var(--color-accent-soft)] text-[var(--color-ink)]" : "text-[var(--color-ink-soft)]",
+            ].join(" ")}
+            title="Buscar no livro"
+            aria-label="Buscar no livro"
           >
-            −
+            <Search className="size-4" />
           </button>
-          <span className="w-12 text-center tabular-nums">{Math.round(scale * 100)}%</span>
-          <button
-            onClick={() => zoom(0.2)}
-            className="grid size-8 place-items-center rounded-full hover:bg-[var(--color-line)]/60"
-            aria-label="Aumentar zoom"
+
+          <Link
+            href={`/caderno/${data.userBookId}`}
+            className="grid size-8 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60"
+            title="Caderno do livro"
+            aria-label="Caderno do livro"
           >
-            +
+            <Notebook className="size-4" />
+          </Link>
+
+          <BookmarksControl
+            userBookId={data.userBookId}
+            currentPage={page}
+            onJump={jumpTo}
+          />
+
+          <ModeToggle mode={mode} onChange={setMode} />
+
+          <ThemeToggle />
+
+          <button
+            onClick={toggleFullscreen}
+            className="grid size-8 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60"
+            title={fullscreen ? "Sair da tela cheia" : "Tela cheia"}
+            aria-label={fullscreen ? "Sair da tela cheia" : "Tela cheia"}
+          >
+            {fullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </button>
+
+          <button
+            onClick={() => setPanelOpen((v) => !v)}
+            className={[
+              "grid size-8 place-items-center rounded-full transition-colors hover:bg-[var(--color-line)]/60",
+              panelOpen ? "text-[var(--color-ink)]" : "text-[var(--color-ink-soft)]",
+            ].join(" ")}
+            title="Painel da página"
+            aria-label="Alternar painel da página"
+          >
+            <PanelRight className="size-4" />
           </button>
         </div>
-
-        <button
-          onClick={() => setPanelOpen((v) => !v)}
-          className={[
-            "grid size-8 place-items-center rounded-full transition-colors hover:bg-[var(--color-line)]/60",
-            panelOpen ? "text-[var(--color-ink)]" : "text-[var(--color-ink-soft)]",
-          ].join(" ")}
-          title="Painel da página"
-          aria-label="Alternar painel da página"
-        >
-          <PanelRight className="size-4" />
-        </button>
       </header>
 
       {/* bancada: ferramentas | página | painel de contexto */}
-      <div className="flex min-h-0 flex-1 overflow-hidden">
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
+        {findOpen && (
+          <ReaderFind
+            doc={doc}
+            numPages={numPages}
+            currentPage={page}
+            onJump={(p) => {
+              jumpTo(p);
+              setMode("single");
+            }}
+            onClose={() => setFindOpen(false)}
+          />
+        )}
         <ReaderRail
           userBookId={data.userBookId}
           page={page}
@@ -365,6 +446,7 @@ export function PdfReader({ data }: { data: ReaderData }) {
               page={page}
               highlights={pageHighlights}
               notes={pageNotes}
+              concepts={data.concepts}
               tab={panelTab}
               onTab={setPanelTab}
               onOpenHighlight={setActiveHighlight}
@@ -377,16 +459,36 @@ export function PdfReader({ data }: { data: ReaderData }) {
       </div>
 
       {/* navegação inferior */}
-      <footer className="sticky bottom-0 z-10 flex h-16 items-center justify-center gap-6 border-t border-[var(--color-line)] bg-[var(--color-paper)]/80 backdrop-blur-xl">
-        <NavBtn onClick={() => go(-1)} disabled={page <= 1}>
-          <ChevronLeft className="size-4" /> Anterior
-        </NavBtn>
-        <span className="min-w-28 text-center text-sm tabular-nums text-[var(--color-ink-soft)]">
-          Página {page} / {numPages || "…"}
-        </span>
-        <NavBtn onClick={() => go(1)} disabled={!!numPages && page >= numPages}>
-          Próxima <ChevronRight className="size-4" />
-        </NavBtn>
+      <footer className="sticky bottom-0 z-10 grid h-16 grid-cols-3 items-center border-t border-[var(--color-line)] bg-[var(--color-paper)]/80 px-4 backdrop-blur-xl">
+        <div />
+        <div className="flex items-center justify-center gap-6">
+          <NavBtn onClick={() => go(-1)} disabled={page <= 1}>
+            <ChevronLeft className="size-4" /> Anterior
+          </NavBtn>
+          <span className="min-w-28 text-center text-sm tabular-nums text-[var(--color-ink-soft)]">
+            Página {page} / {numPages || "…"}
+          </span>
+          <NavBtn onClick={() => go(1)} disabled={!!numPages && page >= numPages}>
+            Próxima <ChevronRight className="size-4" />
+          </NavBtn>
+        </div>
+        <div className="flex items-center justify-end gap-1 text-sm text-[var(--color-ink-soft)]">
+          <button
+            onClick={() => zoom(-0.2)}
+            className="grid size-8 place-items-center rounded-full hover:bg-[var(--color-line)]/60"
+            aria-label="Diminuir zoom"
+          >
+            −
+          </button>
+          <span className="w-12 text-center tabular-nums">{Math.round(scale * 100)}%</span>
+          <button
+            onClick={() => zoom(0.2)}
+            className="grid size-8 place-items-center rounded-full hover:bg-[var(--color-line)]/60"
+            aria-label="Aumentar zoom"
+          >
+            +
+          </button>
+        </div>
       </footer>
     </div>
   );

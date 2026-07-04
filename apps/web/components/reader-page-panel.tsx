@@ -1,9 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { X, Plus, MessageSquare, CircleHelp, Highlighter } from "lucide-react";
+import Link from "next/link";
+import { X, Plus, MessageSquare, CircleHelp, Highlighter, BookText } from "lucide-react";
 import { CATEGORY_META, highlightColor, type HighlightDTO } from "@/lib/highlight-shared";
 import type { NoteDTO } from "@/lib/note-shared";
+
+export interface ReaderConcept {
+  id: string;
+  title: string;
+  color: string;
+}
 
 export type PanelTab = "content" | "notes" | "questions";
 
@@ -13,6 +20,7 @@ export function ReaderPagePanel({
   page,
   highlights,
   notes,
+  concepts,
   tab,
   onTab,
   onOpenHighlight,
@@ -23,6 +31,7 @@ export function ReaderPagePanel({
   page: number;
   highlights: HighlightDTO[];
   notes: NoteDTO[];
+  concepts: ReaderConcept[];
   tab: PanelTab;
   onTab: (t: PanelTab) => void;
   onOpenHighlight: (h: HighlightDTO) => void;
@@ -101,6 +110,27 @@ export function ReaderPagePanel({
                   </div>
                 </button>
               ))
+            )}
+          </Section>
+        )}
+
+        {tab === "content" && (
+          <Section title="Conceitos relacionados" icon={BookText}>
+            {concepts.length === 0 ? (
+              <Empty>Nenhum conceito vinculado a este livro ainda.</Empty>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {concepts.map((c) => (
+                  <Link
+                    key={c.id}
+                    href={`/conceito/${c.id}`}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-line)] px-2.5 py-1 text-xs transition-colors hover:bg-[var(--color-line)]/40"
+                  >
+                    <span className="size-2 rounded-full" style={{ background: c.color }} />
+                    {c.title}
+                  </Link>
+                ))}
+              </div>
             )}
           </Section>
         )}
