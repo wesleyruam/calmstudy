@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Star, X } from "lucide-react";
 import {
   CATEGORY_META,
   HIGHLIGHT_CATEGORIES,
@@ -92,22 +93,28 @@ export function HighlightPanel({
     <aside className="flex h-full w-80 shrink-0 flex-col border-l border-[var(--color-line)] bg-[var(--color-surface)]">
       {/* cabeçalho */}
       <div className="flex items-center gap-2 border-b border-[var(--color-line)] px-4 py-3">
-        <span className="text-lg leading-none">{meta.emoji}</span>
+        <span
+          className="size-3 shrink-0 rounded-full"
+          style={{ background: highlightColor(highlight) }}
+        />
         <span className="flex-1 text-sm font-medium">{meta.label}</span>
         <button
           onClick={() => void patch({ favorite: !highlight.favorite })}
-          className="grid size-8 place-items-center rounded-full text-lg hover:bg-[var(--color-line)]/60"
+          className={[
+            "grid size-8 place-items-center rounded-full hover:bg-[var(--color-line)]/60",
+            highlight.favorite ? "text-amber-400" : "",
+          ].join(" ")}
           title="Favoritar"
           aria-label="Favoritar"
         >
-          {highlight.favorite ? "★" : "☆"}
+          <Star className="size-4" fill={highlight.favorite ? "currentColor" : "none"} />
         </button>
         <button
           onClick={onClose}
           className="grid size-8 place-items-center rounded-full hover:bg-[var(--color-line)]/60"
           aria-label="Fechar"
         >
-          ✕
+          <X className="size-4" />
         </button>
       </div>
 

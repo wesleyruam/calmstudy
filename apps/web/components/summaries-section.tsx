@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import { RichTextEditor } from "@/components/rich-text-editor";
 import { NoteRender } from "@/components/note-render";
 import type { SummaryDTO } from "@/lib/summary-shared";
@@ -105,7 +106,9 @@ export function SummariesSection({
                     onClick={() => setOpenId(open ? null : s.id)}
                     className="flex flex-1 items-center gap-2 text-left"
                   >
-                    <span className="text-[var(--color-ink-soft)]">{open ? "▾" : "▸"}</span>
+                    <span className="text-[var(--color-ink-soft)]">
+                      {open ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+                    </span>
                     <span className="font-medium">
                       {s.title || s.chapter || "Resumo sem título"}
                     </span>
@@ -118,7 +121,7 @@ export function SummariesSection({
                     className="grid size-7 place-items-center rounded-full text-[var(--color-ink-soft)] hover:bg-[var(--color-line)]/60 hover:text-red-500"
                     title="Excluir"
                   >
-                    🗑
+                    <Trash2 className="size-3.5" />
                   </button>
                 </div>
 

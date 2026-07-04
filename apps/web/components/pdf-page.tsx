@@ -252,7 +252,7 @@ function SelectionToolbar({
             <button
               key={c}
               onClick={() => onPick(c)}
-              title={`${meta.emoji} ${meta.label}`}
+              title={meta.label}
               className="grid size-6 place-items-center rounded-full transition-transform hover:scale-110"
               style={{ background: hexToRgba(meta.color, 0.85) }}
               aria-label={meta.label}

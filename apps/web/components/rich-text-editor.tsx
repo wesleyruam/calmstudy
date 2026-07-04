@@ -1,6 +1,21 @@
 "use client";
 
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
+import {
+  Heading1,
+  Heading2,
+  Bold,
+  Italic,
+  Code,
+  List,
+  ListOrdered,
+  ListChecks,
+  Quote,
+  SquareCode,
+  Link as LinkIcon,
+  Table as TableIcon,
+  Image as ImageIcon,
+} from "lucide-react";
 import StarterKit from "@tiptap/starter-kit";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
@@ -74,6 +89,7 @@ function Toolbar({ editor }: { editor: Editor }) {
         : "text-[var(--color-ink-soft)] hover:bg-[var(--color-line)]/60",
     ].join(" ");
 
+  const ico = "size-4";
   return (
     <div className="flex flex-wrap items-center gap-0.5 border-b border-[var(--color-line)] p-1">
       <button
@@ -81,14 +97,14 @@ function Toolbar({ editor }: { editor: Editor }) {
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         title="Título"
       >
-        H1
+        <Heading1 className={ico} />
       </button>
       <button
         className={btn(editor.isActive("heading", { level: 2 }))}
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         title="Subtítulo"
       >
-        H2
+        <Heading2 className={ico} />
       </button>
       <Sep />
       <button
@@ -96,21 +112,21 @@ function Toolbar({ editor }: { editor: Editor }) {
         onClick={() => editor.chain().focus().toggleBold().run()}
         title="Negrito"
       >
-        <b>B</b>
+        <Bold className={ico} />
       </button>
       <button
         className={btn(editor.isActive("italic"))}
         onClick={() => editor.chain().focus().toggleItalic().run()}
         title="Itálico"
       >
-        <i>I</i>
+        <Italic className={ico} />
       </button>
       <button
         className={btn(editor.isActive("code"))}
         onClick={() => editor.chain().focus().toggleCode().run()}
         title="Código inline"
       >
-        {"</>"}
+        <Code className={ico} />
       </button>
       <Sep />
       <button
@@ -118,21 +134,21 @@ function Toolbar({ editor }: { editor: Editor }) {
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         title="Lista"
       >
-        •
+        <List className={ico} />
       </button>
       <button
         className={btn(editor.isActive("orderedList"))}
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         title="Lista numerada"
       >
-        1.
+        <ListOrdered className={ico} />
       </button>
       <button
         className={btn(editor.isActive("taskList"))}
         onClick={() => editor.chain().focus().toggleTaskList().run()}
         title="Checklist"
       >
-        ☑
+        <ListChecks className={ico} />
       </button>
       <Sep />
       <button
@@ -140,21 +156,21 @@ function Toolbar({ editor }: { editor: Editor }) {
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
         title="Citação"
       >
-        &rdquo;
+        <Quote className={ico} />
       </button>
       <button
         className={btn(editor.isActive("codeBlock"))}
         onClick={() => editor.chain().focus().toggleCodeBlock().run()}
         title="Bloco de código"
       >
-        {"{}"}
+        <SquareCode className={ico} />
       </button>
       <button
         className={btn(editor.isActive("link"))}
         onClick={() => setLink(editor)}
         title="Link"
       >
-        🔗
+        <LinkIcon className={ico} />
       </button>
       <button
         className={btn(false)}
@@ -163,10 +179,10 @@ function Toolbar({ editor }: { editor: Editor }) {
         }
         title="Tabela"
       >
-        ▦
+        <TableIcon className={ico} />
       </button>
       <button className={btn(false)} onClick={() => addImage(editor)} title="Imagem">
-        🖼
+        <ImageIcon className={ico} />
       </button>
     </div>
   );

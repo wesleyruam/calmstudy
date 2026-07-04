@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Waypoints, Star, Link2, BookText, Highlighter, StickyNote, FileText, ArrowLeft } from "lucide-react";
 import type { KnowledgeData } from "@/lib/knowledge";
 import type { ConceptListItem } from "@/lib/concept-shared";
 
@@ -57,9 +58,9 @@ export function KnowledgeView({ data }: { data: KnowledgeData }) {
         <div>
           <Link
             href="/"
-            className="text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
+            className="inline-flex items-center gap-1 text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
           >
-            ← Biblioteca
+            <ArrowLeft className="size-4" /> Biblioteca
           </Link>
           <h1 className="mt-3 font-serif text-2xl">Conhecimento</h1>
           <p className="mt-0.5 text-sm text-[var(--color-ink-soft)]">
@@ -68,9 +69,9 @@ export function KnowledgeView({ data }: { data: KnowledgeData }) {
         </div>
         <Link
           href="/mapa"
-          className="shrink-0 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm transition-colors hover:bg-[var(--color-line)]/40"
+          className="flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm transition-colors hover:bg-[var(--color-line)]/40"
         >
-          🕸 Mapa
+          <Waypoints className="size-4" /> Mapa
         </Link>
       </header>
 
@@ -119,7 +120,7 @@ export function KnowledgeView({ data }: { data: KnowledgeData }) {
               >
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{c.title}</span>
-                  {c.favorite && <span className="text-xs text-amber-400">★</span>}
+                  {c.favorite && <Star className="size-3.5 text-amber-400" fill="currentColor" />}
                 </div>
                 {c.description && (
                   <p className="mt-1 line-clamp-2 text-sm text-[var(--color-ink-soft)]">
@@ -127,10 +128,26 @@ export function KnowledgeView({ data }: { data: KnowledgeData }) {
                   </p>
                 )}
                 <div className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--color-ink-soft)]">
-                  {c.counts.links > 0 && <Chip>🔗 {c.counts.links}</Chip>}
-                  {c.counts.books > 0 && <Chip>📚 {c.counts.books}</Chip>}
-                  {c.counts.highlights > 0 && <Chip>✦ {c.counts.highlights}</Chip>}
-                  {c.counts.notes > 0 && <Chip>📝 {c.counts.notes}</Chip>}
+                  {c.counts.links > 0 && (
+                    <Chip>
+                      <Link2 className="size-3" /> {c.counts.links}
+                    </Chip>
+                  )}
+                  {c.counts.books > 0 && (
+                    <Chip>
+                      <BookText className="size-3" /> {c.counts.books}
+                    </Chip>
+                  )}
+                  {c.counts.highlights > 0 && (
+                    <Chip>
+                      <Highlighter className="size-3" /> {c.counts.highlights}
+                    </Chip>
+                  )}
+                  {c.counts.notes > 0 && (
+                    <Chip>
+                      <StickyNote className="size-3" /> {c.counts.notes}
+                    </Chip>
+                  )}
                 </div>
               </Link>
             </li>
@@ -163,7 +180,8 @@ export function KnowledgeView({ data }: { data: KnowledgeData }) {
                   href={`/pagina/${p.id}`}
                   className="flex items-center gap-2 px-4 py-3 text-sm transition-colors hover:bg-[var(--color-line)]/30"
                 >
-                  📄 {p.title || "Sem título"}
+                  <FileText className="size-4 text-[var(--color-ink-soft)]" />
+                  {p.title || "Sem título"}
                 </Link>
               </li>
             ))}
@@ -175,5 +193,9 @@ export function KnowledgeView({ data }: { data: KnowledgeData }) {
 }
 
 function Chip({ children }: { children: React.ReactNode }) {
-  return <span className="rounded-full bg-[var(--color-line)]/50 px-2 py-0.5">{children}</span>;
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-line)]/50 px-2 py-0.5">
+      {children}
+    </span>
+  );
 }

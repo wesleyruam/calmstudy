@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { GraphData } from "@/lib/concept-shared";
@@ -112,9 +113,9 @@ export function GraphView({ data }: { data: GraphData }) {
         <div>
           <Link
             href="/conhecimento"
-            className="text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
+            className="inline-flex items-center gap-1 text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
           >
-            ← Conhecimento
+            <ArrowLeft className="size-4" /> Conhecimento
           </Link>
           <h1 className="mt-3 font-serif text-2xl">Mapa de conhecimento</h1>
           <p className="mt-0.5 text-sm text-[var(--color-ink-soft)]">

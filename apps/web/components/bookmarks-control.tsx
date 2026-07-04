@@ -1,7 +1,38 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  Bookmark,
+  X,
+  Repeat,
+  Star,
+  Wrench,
+  Search,
+  PencilLine,
+  CircleHelp,
+  Package,
+  Briefcase,
+  GraduationCap,
+  type LucideIcon,
+} from "lucide-react";
 import { BOOKMARK_CATEGORIES, bookmarkMeta, type BookmarkDTO } from "@/lib/bookmark-shared";
+
+const BM_ICONS: Record<string, LucideIcon> = {
+  Repeat,
+  Star,
+  Wrench,
+  Search,
+  PencilLine,
+  CircleHelp,
+  Package,
+  Briefcase,
+  GraduationCap,
+};
+
+function BmIcon({ name, className }: { name?: string; className?: string }) {
+  const Ico = (name && BM_ICONS[name]) || Bookmark;
+  return <Ico className={className ?? "size-4"} />;
+}
 
 // Marcadores inteligentes (módulo 12): marcar a página atual com uma categoria
 // (Revisar, Aplicar, Dúvida…) e saltar entre marcadores.
@@ -62,7 +93,8 @@ export function BookmarksControl({
         ].join(" ")}
         title="Marcadores"
       >
-        🔖 {bookmarks.length > 0 && <span className="tabular-nums">{bookmarks.length}</span>}
+        <Bookmark className="size-4" />
+        {bookmarks.length > 0 && <span className="tabular-nums">{bookmarks.length}</span>}
       </button>
 
       {open && (
@@ -85,10 +117,10 @@ export function BookmarksControl({
                 <button
                   key={c.key}
                   onClick={() => add(c.key)}
-                  className="flex items-center gap-1 rounded-lg px-1.5 py-1 text-left text-xs transition-colors hover:bg-[var(--color-line)]/50"
+                  className="flex items-center gap-1.5 rounded-lg px-1.5 py-1 text-left text-xs transition-colors hover:bg-[var(--color-line)]/50"
                   title={c.label}
                 >
-                  <span>{c.emoji}</span>
+                  <BmIcon name={c.icon} className="size-3.5 shrink-0" />
                   <span className="truncate">{c.label}</span>
                 </button>
               ))}
@@ -112,7 +144,7 @@ export function BookmarksControl({
                       }}
                       className="flex flex-1 items-center gap-2 text-left"
                     >
-                      <span>{meta?.emoji ?? "🔖"}</span>
+                      <BmIcon name={meta?.icon} className="size-3.5 shrink-0" />
                       <span className="flex-1 truncate text-[var(--color-ink)]">
                         {meta?.label ?? "Marcador"}
                       </span>
@@ -125,7 +157,7 @@ export function BookmarksControl({
                       className="opacity-0 transition-opacity group-hover:opacity-100"
                       title="Remover"
                     >
-                      ✕
+                      <X className="size-3.5" />
                     </button>
                   </li>
                 );

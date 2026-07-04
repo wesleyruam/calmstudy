@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Download } from "lucide-react";
 
 async function uploadFiles(files: FileList | File[]): Promise<void> {
   const form = new FormData();
@@ -111,7 +112,7 @@ export function DropOverlay() {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-[var(--color-paper)]/60 backdrop-blur-md">
       <div className="rounded-[var(--radius-card)] border-2 border-dashed border-[var(--color-accent)] bg-[var(--color-surface)] px-16 py-12 text-center shadow-[var(--shadow-calm)]">
-        <div className="text-3xl">📥</div>
+        <Download className="mx-auto size-8 text-[var(--color-accent)]" />
         <p className="mt-3 font-serif text-lg">Solte para importar</p>
         <p className="mt-1 text-sm text-[var(--color-ink-soft)]">PDF, EPUB e outros formatos</p>
       </div>

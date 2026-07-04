@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Star, Trash2 } from "lucide-react";
 import { NoteRender } from "@/components/note-render";
 import { CATEGORY_META, hexToRgba, highlightColor, type HighlightDTO } from "@/lib/highlight-shared";
 import type { NoteDTO } from "@/lib/note-shared";
@@ -48,7 +49,7 @@ export function HighlightItem({
       style={{ borderLeft: `3px solid ${color}` }}
     >
       <div className="mb-2 flex items-center gap-2 text-xs text-[var(--color-ink-soft)]">
-        <span>{meta.emoji}</span>
+        <span className="size-2.5 shrink-0 rounded-full" style={{ background: color }} />
         <span className="font-medium text-[var(--color-ink)]">{meta.label}</span>
         {showBook && h.bookTitle && ub && (
           <Link href={`/caderno/${ub}`} className="truncate hover:text-[var(--color-ink)]">
@@ -66,10 +67,13 @@ export function HighlightItem({
         <div className="ml-auto flex shrink-0 items-center gap-1">
           <button
             onClick={() => onPatch(h.id, { favorite: !h.favorite })}
-            className="grid size-7 place-items-center rounded-full hover:bg-[var(--color-line)]/60"
+            className={[
+              "grid size-7 place-items-center rounded-full hover:bg-[var(--color-line)]/60",
+              h.favorite ? "text-amber-400" : "",
+            ].join(" ")}
             title="Favoritar"
           >
-            {h.favorite ? "★" : "☆"}
+            <Star className="size-4" fill={h.favorite ? "currentColor" : "none"} />
           </button>
           <button
             onClick={() => onPatch(h.id, { reviewStatus: REVIEW_NEXT[h.reviewStatus] })}
@@ -88,7 +92,7 @@ export function HighlightItem({
             className="grid size-7 place-items-center rounded-full text-[var(--color-ink-soft)] hover:bg-[var(--color-line)]/60 hover:text-red-500"
             title="Excluir"
           >
-            🗑
+            <Trash2 className="size-3.5" />
           </button>
         </div>
       </div>

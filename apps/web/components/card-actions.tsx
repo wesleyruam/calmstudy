@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Star, Notebook, ChartColumn, Pencil, Check, Trash2, Ellipsis } from "lucide-react";
 
 export interface ShelfOption {
   id: string;
@@ -106,7 +107,7 @@ export function CardActions({
         ].join(" ")}
       >
         <span className={favorite ? "text-amber-300" : "text-white/90"}>
-          {favorite ? "★" : "☆"}
+          <Star className="size-4" fill={favorite ? "currentColor" : "none"} />
         </span>
       </button>
 
@@ -117,9 +118,9 @@ export function CardActions({
             setMenuOpen((o) => !o);
           }}
           aria-label="Mais ações"
-          className="grid size-7 place-items-center rounded-full bg-black/35 text-sm leading-none text-white/90 backdrop-blur-sm"
+          className="grid size-7 place-items-center rounded-full bg-black/35 leading-none text-white/90 backdrop-blur-sm"
         >
-          ⋯
+          <Ellipsis className="size-4" />
         </button>
         {menuOpen && (
           <div
@@ -132,7 +133,7 @@ export function CardActions({
                 router.push(`/caderno/${userBookId}`);
               }}
             >
-              📓 Caderno
+              <Notebook className="size-4" /> Caderno
             </MenuItem>
             <MenuItem
               onClick={(e) => {
@@ -140,9 +141,11 @@ export function CardActions({
                 router.push(`/livro/${userBookId}`);
               }}
             >
-              📊 Painel
+              <ChartColumn className="size-4" /> Painel
             </MenuItem>
-            <MenuItem onClick={rename}>✏️ Renomear</MenuItem>
+            <MenuItem onClick={rename}>
+              <Pencil className="size-4" /> Renomear
+            </MenuItem>
 
             {shelves.length > 0 && (
               <>
@@ -157,7 +160,9 @@ export function CardActions({
                       onClick={(e) => toggleShelf(e, shelf.id)}
                       className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors hover:bg-[var(--color-line)]/50"
                     >
-                      <span className="w-4 text-[var(--color-accent)]">{on ? "✓" : ""}</span>
+                      <span className="grid w-4 place-items-center text-[var(--color-accent)]">
+                        {on ? <Check className="size-4" /> : null}
+                      </span>
                       <span className="flex-1 truncate">{shelf.name}</span>
                     </button>
                   );
@@ -167,7 +172,7 @@ export function CardActions({
 
             <div className="my-1 border-t border-[var(--color-line)]" />
             <MenuItem onClick={remove} danger>
-              🗑 Excluir
+              <Trash2 className="size-4" /> Excluir
             </MenuItem>
           </div>
         )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { HighlightItem, type StudyHighlight } from "@/components/highlight-item";
 import type { FavoritesData } from "@/lib/favorites";
@@ -33,9 +34,9 @@ export function FavoritesView({ data }: { data: FavoritesData }) {
       <header className="mb-6">
         <Link
           href="/"
-          className="text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
+          className="inline-flex items-center gap-1 text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
         >
-          ← Biblioteca
+          <ArrowLeft className="size-4" /> Biblioteca
         </Link>
         <h1 className="mt-3 font-serif text-2xl">Favoritos</h1>
       </header>

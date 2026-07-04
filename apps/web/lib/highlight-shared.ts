@@ -18,22 +18,21 @@ export type HighlightCategory = (typeof HIGHLIGHT_CATEGORIES)[number];
 
 export interface CategoryMeta {
   label: string;
-  emoji: string;
   /** cor base (hex) usada como padrão do destaque */
   color: string;
 }
 
 // Rótulos/cores conforme o módulo 1 do CalmStudy.
 export const CATEGORY_META: Record<HighlightCategory, CategoryMeta> = {
-  IMPORTANT: { label: "Importante", emoji: "🟨", color: "#f5c542" },
-  DEFINITION: { label: "Definição", emoji: "🟩", color: "#4caf72" },
-  EXAMPLE: { label: "Exemplo", emoji: "🟦", color: "#4a90d9" },
-  QUESTION: { label: "Dúvida", emoji: "🟥", color: "#e05656" },
-  REVIEW: { label: "Revisar", emoji: "🟪", color: "#9b6dd6" },
-  EXERCISE: { label: "Exercício", emoji: "🟧", color: "#e8934a" },
-  QUOTE: { label: "Citação", emoji: "⚪", color: "#9aa0a6" },
-  IDEA: { label: "Ideia", emoji: "🔵", color: "#3ab6c8" },
-  APPLICATION: { label: "Aplicação prática", emoji: "🟫", color: "#a9744f" },
+  IMPORTANT: { label: "Importante", color: "#f5c542" },
+  DEFINITION: { label: "Definição", color: "#4caf72" },
+  EXAMPLE: { label: "Exemplo", color: "#4a90d9" },
+  QUESTION: { label: "Dúvida", color: "#e05656" },
+  REVIEW: { label: "Revisar", color: "#9b6dd6" },
+  EXERCISE: { label: "Exercício", color: "#e8934a" },
+  QUOTE: { label: "Citação", color: "#9aa0a6" },
+  IDEA: { label: "Ideia", color: "#3ab6c8" },
+  APPLICATION: { label: "Aplicação prática", color: "#a9744f" },
 };
 
 export type ReviewStatus = "NONE" | "PENDING" | "REVIEWED" | "MASTERED";

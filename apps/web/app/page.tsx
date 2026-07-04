@@ -1,3 +1,4 @@
+import { Library, Folder } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Sidebar } from "@/components/sidebar";
 import { BookCard } from "@/components/book-card";
@@ -76,8 +77,8 @@ function EmptyState({ filter, shelf }: { filter: LibraryFilter; shelf: boolean }
   return (
     <div className="grid place-items-center rounded-[var(--radius-card)] border border-dashed border-[var(--color-line)] bg-[var(--color-surface)]/40 px-6 py-24 text-center">
       <div className="max-w-sm">
-        <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-[var(--color-accent-soft)] text-2xl">
-          {shelf ? "🗂" : "📚"}
+        <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
+          {shelf ? <Folder className="size-6" /> : <Library className="size-6" />}
         </div>
         <h2 className="mt-5 font-serif text-xl">
           {inviteUpload ? "Sua estante está silenciosa" : "Nada por aqui"}
@@ -86,7 +87,7 @@ function EmptyState({ filter, shelf }: { filter: LibraryFilter; shelf: boolean }
           {inviteUpload
             ? "Arraste um PDF, EPUB ou outro documento — ou clique abaixo. O CalmStudy extrai título, autor e páginas automaticamente."
             : shelf
-              ? "Passe o mouse sobre um livro e use o ícone 🗂 para adicioná-lo a esta prateleira."
+              ? "Passe o mouse sobre um livro e use o menu (⋯) para adicioná-lo a esta prateleira."
               : "Nenhum livro corresponde a este filtro por enquanto."}
         </p>
         {inviteUpload && (

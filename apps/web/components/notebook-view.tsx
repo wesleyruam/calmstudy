@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { ChartColumn, Star, ArrowLeft } from "lucide-react";
 import { HighlightItem } from "@/components/highlight-item";
 import { SummariesSection } from "@/components/summaries-section";
 import {
@@ -76,9 +77,9 @@ export function NotebookView({ data }: { data: NotebookData }) {
       <header className="mb-6">
         <Link
           href="/"
-          className="text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
+          className="inline-flex items-center gap-1 text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
         >
-          ← Biblioteca
+          <ArrowLeft className="size-4" /> Biblioteca
         </Link>
         <div className="mt-3 flex items-start justify-between gap-4">
           <div className="min-w-0">
@@ -90,9 +91,9 @@ export function NotebookView({ data }: { data: NotebookData }) {
           <div className="flex shrink-0 gap-2">
             <Link
               href={`/livro/${data.userBookId}`}
-              className="rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm transition-colors hover:bg-[var(--color-line)]/40"
+              className="flex items-center gap-1.5 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm transition-colors hover:bg-[var(--color-line)]/40"
             >
-              📊 Painel
+              <ChartColumn className="size-4" /> Painel
             </Link>
             <Link
               href={`/read/${data.userBookId}`}
@@ -148,13 +149,13 @@ export function NotebookView({ data }: { data: NotebookData }) {
           <button
             onClick={() => setFavOnly((v) => !v)}
             className={[
-              "ml-auto rounded-full border px-2.5 py-1 text-xs transition-colors",
+              "ml-auto flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors",
               favOnly
                 ? "border-transparent bg-[var(--color-accent-soft)] text-[var(--color-ink)]"
                 : "border-[var(--color-line)] text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]",
             ].join(" ")}
           >
-            ★ Favoritos
+            <Star className="size-3.5" fill={favOnly ? "currentColor" : "none"} /> Favoritos
           </button>
         </div>
       </div>

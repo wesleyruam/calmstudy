@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Star, Trash2, ArrowLeft } from "lucide-react";
 import { RichTextEditor } from "@/components/rich-text-editor";
 import { HighlightItem } from "@/components/highlight-item";
 import type { ConceptDetail } from "@/lib/concept-shared";
@@ -79,24 +80,27 @@ export function ConceptView({
       <div className="mb-4 flex items-center justify-between">
         <Link
           href="/conhecimento"
-          className="text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
+          className="inline-flex items-center gap-1 text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
         >
-          ← Conhecimento
+          <ArrowLeft className="size-4" /> Conhecimento
         </Link>
         <div className="flex items-center gap-1">
           <button
             onClick={() => patch({ favorite: !c.favorite })}
-            className="grid size-8 place-items-center rounded-full text-lg hover:bg-[var(--color-line)]/60"
+            className={[
+              "grid size-8 place-items-center rounded-full hover:bg-[var(--color-line)]/60",
+              c.favorite ? "text-amber-400" : "",
+            ].join(" ")}
             title="Favoritar"
           >
-            {c.favorite ? "★" : "☆"}
+            <Star className="size-4" fill={c.favorite ? "currentColor" : "none"} />
           </button>
           <button
             onClick={removeConcept}
             className="grid size-8 place-items-center rounded-full text-[var(--color-ink-soft)] hover:bg-[var(--color-line)]/60 hover:text-red-500"
             title="Excluir"
           >
-            🗑
+            <Trash2 className="size-4" />
           </button>
         </div>
       </div>

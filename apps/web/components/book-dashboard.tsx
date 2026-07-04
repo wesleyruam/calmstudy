@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { Notebook, ArrowLeft } from "lucide-react";
 import { formatDuration, type DashboardData, type GoalDTO, type TaskDTO } from "@/lib/dashboard-shared";
 
 export function BookDashboard({ data }: { data: DashboardData }) {
@@ -76,9 +77,9 @@ export function BookDashboard({ data }: { data: DashboardData }) {
       <header className="mb-6">
         <Link
           href="/"
-          className="text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
+          className="inline-flex items-center gap-1 text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
         >
-          ← Biblioteca
+          <ArrowLeft className="size-4" /> Biblioteca
         </Link>
         <div className="mt-3 flex items-start gap-4">
           <div className="h-24 w-16 shrink-0 overflow-hidden rounded-md bg-[var(--color-line)]">
@@ -107,9 +108,9 @@ export function BookDashboard({ data }: { data: DashboardData }) {
               </Link>
               <Link
                 href={`/caderno/${data.userBookId}`}
-                className="rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-1.5 transition-colors hover:bg-[var(--color-line)]/40"
+                className="flex items-center gap-1.5 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-1.5 transition-colors hover:bg-[var(--color-line)]/40"
               >
-                📓 Caderno
+                <Notebook className="size-4" /> Caderno
               </Link>
             </div>
           </div>

@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Trash2, ArrowLeft } from "lucide-react";
 import { RichTextEditor } from "@/components/rich-text-editor";
 import type { NoteDTO, TiptapDoc } from "@/lib/note-shared";
 
@@ -33,16 +34,16 @@ export function FreePageView({ note }: { note: NoteDTO }) {
       <div className="mb-4 flex items-center justify-between">
         <Link
           href="/conhecimento"
-          className="text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
+          className="inline-flex items-center gap-1 text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
         >
-          ← Conhecimento
+          <ArrowLeft className="size-4" /> Conhecimento
         </Link>
         <button
           onClick={remove}
           className="grid size-8 place-items-center rounded-full text-[var(--color-ink-soft)] hover:bg-[var(--color-line)]/60 hover:text-red-500"
           title="Excluir"
         >
-          🗑
+          <Trash2 className="size-4" />
         </button>
       </div>
 

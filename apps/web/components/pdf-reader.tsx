@@ -10,6 +10,7 @@ import { HighlightPanel } from "@/components/highlight-panel";
 import { HighlightNotes } from "@/components/highlight-notes";
 import { BookmarksControl } from "@/components/bookmarks-control";
 import { StudySessionTracker } from "@/components/study-session-tracker";
+import { Notebook, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import type { HighlightDTO } from "@/lib/highlight-shared";
 
 const MIN_SCALE = 0.5;
@@ -162,7 +163,7 @@ export function PdfReader({ data }: { data: ReaderData }) {
           href="/"
           className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60"
         >
-          ← Biblioteca
+          <ArrowLeft className="size-4" /> Biblioteca
         </Link>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{data.title}</p>
@@ -173,10 +174,10 @@ export function PdfReader({ data }: { data: ReaderData }) {
 
         <Link
           href={`/caderno/${data.userBookId}`}
-          className="rounded-full px-3 py-1.5 text-sm text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60"
+          className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60"
           title="Caderno do livro"
         >
-          📓 Caderno
+          <Notebook className="size-4" /> Caderno
         </Link>
 
         <BookmarksControl
@@ -255,13 +256,13 @@ export function PdfReader({ data }: { data: ReaderData }) {
       {/* navegação inferior */}
       <footer className="sticky bottom-0 z-10 flex h-16 items-center justify-center gap-6 border-t border-[var(--color-line)] bg-[var(--color-paper)]/80 backdrop-blur-xl">
         <NavBtn onClick={() => go(-1)} disabled={page <= 1}>
-          ← Anterior
+          <ChevronLeft className="size-4" /> Anterior
         </NavBtn>
         <span className="min-w-28 text-center text-sm tabular-nums text-[var(--color-ink-soft)]">
           Página {page} / {numPages || "…"}
         </span>
         <NavBtn onClick={() => go(1)} disabled={!!numPages && page >= numPages}>
-          Próxima →
+          Próxima <ChevronRight className="size-4" />
         </NavBtn>
       </footer>
     </div>
@@ -302,7 +303,7 @@ function NavBtn({
     <button
       onClick={onClick}
       disabled={disabled}
-      className="rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm transition-colors hover:bg-[var(--color-line)]/40 disabled:cursor-not-allowed disabled:opacity-40"
+      className="inline-flex items-center gap-1 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm transition-colors hover:bg-[var(--color-line)]/40 disabled:cursor-not-allowed disabled:opacity-40"
     >
       {children}
     </button>

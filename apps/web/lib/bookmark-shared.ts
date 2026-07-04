@@ -1,14 +1,15 @@
-// Marcadores inteligentes (módulo 12): categorias de marcador com rótulo/emoji.
+// Marcadores inteligentes (módulo 12): categorias de marcador com rótulo/ícone.
+// `icon` é o nome de um ícone do lucide-react (mapeado no cliente).
 export const BOOKMARK_CATEGORIES = [
-  { key: "REVIEW", label: "Revisar", emoji: "🔁" },
-  { key: "IMPORTANT", label: "Muito importante", emoji: "⭐" },
-  { key: "APPLY", label: "Aplicar", emoji: "🛠️" },
-  { key: "RESEARCH", label: "Pesquisar", emoji: "🔍" },
-  { key: "EXERCISE", label: "Exercício", emoji: "✏️" },
-  { key: "QUESTION", label: "Dúvida", emoji: "❓" },
-  { key: "PROJECT", label: "Projeto", emoji: "📦" },
-  { key: "WORK", label: "Trabalho", emoji: "💼" },
-  { key: "COLLEGE", label: "Faculdade", emoji: "🎓" },
+  { key: "REVIEW", label: "Revisar", icon: "Repeat" },
+  { key: "IMPORTANT", label: "Muito importante", icon: "Star" },
+  { key: "APPLY", label: "Aplicar", icon: "Wrench" },
+  { key: "RESEARCH", label: "Pesquisar", icon: "Search" },
+  { key: "EXERCISE", label: "Exercício", icon: "PencilLine" },
+  { key: "QUESTION", label: "Dúvida", icon: "CircleHelp" },
+  { key: "PROJECT", label: "Projeto", icon: "Package" },
+  { key: "WORK", label: "Trabalho", icon: "Briefcase" },
+  { key: "COLLEGE", label: "Faculdade", icon: "GraduationCap" },
 ] as const;
 
 export type BookmarkCategoryKey = (typeof BOOKMARK_CATEGORIES)[number]["key"];

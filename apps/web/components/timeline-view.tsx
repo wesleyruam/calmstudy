@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { HighlightItem } from "@/components/highlight-item";
 import type { TimelineDay } from "@/lib/timeline";
@@ -38,9 +39,9 @@ export function TimelineView({ days: initial }: { days: TimelineDay[] }) {
       <header className="mb-6">
         <Link
           href="/"
-          className="text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
+          className="inline-flex items-center gap-1 text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
         >
-          ← Biblioteca
+          <ArrowLeft className="size-4" /> Biblioteca
         </Link>
         <h1 className="mt-3 font-serif text-2xl">Linha do tempo</h1>
         <p className="mt-0.5 text-sm text-[var(--color-ink-soft)]">

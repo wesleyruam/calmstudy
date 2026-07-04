@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowLeft, Flame } from "lucide-react";
 import { formatDuration, type StatsData } from "@/lib/dashboard-shared";
 
 export function StatsView({ data }: { data: StatsData }) {
@@ -7,9 +8,9 @@ export function StatsView({ data }: { data: StatsData }) {
       <header className="mb-6">
         <Link
           href="/"
-          className="text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
+          className="inline-flex items-center gap-1 text-sm text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-ink)]"
         >
-          ← Biblioteca
+          <ArrowLeft className="size-4" /> Biblioteca
         </Link>
         <h1 className="mt-3 font-serif text-2xl">Estatísticas</h1>
         <p className="mt-0.5 text-sm text-[var(--color-ink-soft)]">Sua evolução no estudo.</p>
@@ -18,7 +19,15 @@ export function StatsView({ data }: { data: StatsData }) {
       {/* destaque: tempo + streak */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Big label="Horas estudadas" value={formatDuration(data.totalSeconds)} />
-        <Big label="Dias seguidos" value={`${data.streak} 🔥`} />
+        <Big
+          label="Dias seguidos"
+          value={
+            <span className="flex items-center gap-1.5">
+              {data.streak}
+              <Flame className="size-5 text-orange-400" />
+            </span>
+          }
+        />
         <Big label="Páginas lidas" value={String(data.pagesRead)} />
         <Big label="Média/sessão" value={formatDuration(data.avgSessionSeconds)} />
       </div>
@@ -74,7 +83,7 @@ export function StatsView({ data }: { data: StatsData }) {
   );
 }
 
-function Big({ label, value }: { label: string; value: string }) {
+function Big({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
       <p className="text-xs text-[var(--color-ink-soft)]">{label}</p>
