@@ -52,7 +52,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     <main className="grid min-h-dvh place-items-center bg-[var(--color-paper)] px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
-          <Logo className="h-24" />
+          <Logo className="h-36" />
           <p className="text-sm text-[var(--color-ink-soft)]">
             {isRegister ? "Crie sua conta para começar a estudar." : "Entre para continuar seus estudos."}
           </p>
