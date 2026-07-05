@@ -85,9 +85,10 @@ model User {
   notes       Note[]
   concepts    Concept[]
 
-  ownedSpaces      StudySpace[]  @relation("SpaceOwner")
+  ownedSpaces      StudySpace[]   @relation("SpaceOwner")
   spaceMemberships SpaceMember[]
-  invitesCreated   SpaceInvite[] @relation("InviteCreator")
+  invitesCreated   SpaceInvite[]  @relation("InviteCreator")
+  contributions    Contribution[] @relation("ContribAuthor")
 }
 
 // O documento em si (fato objetivo, deduplicável entre usuários).
@@ -112,8 +113,9 @@ model Book {
   // Coluna gerada (STORED) mantida pelo Postgres — ver migration search_fts.
   searchTsv Unsupported("tsvector")? @map("search_tsv")
 
-  userBooks UserBook[]
-  spaces    StudySpace[]
+  userBooks     UserBook[]
+  spaces        StudySpace[]
+  contributions Contribution[]
 
   @@index([isbn])
   @@index([contentHash])
@@ -154,9 +156,10 @@ model StudySpace {
   owner User @relation("SpaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   book  Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
 
-  members    SpaceMember[]
-  invites    SpaceInvite[]
-  objectives SpaceObjective[]
+  members       SpaceMember[]
+  invites       SpaceInvite[]
+  objectives    SpaceObjective[]
+  contributions Contribution[]
 
   @@index([ownerId])
   @@index([bookId])
@@ -200,6 +203,55 @@ model SpaceObjective {
   space StudySpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
 
   @@index([spaceId])
+}
+
+// Contribuição na camada compartilhada (Fase 2): discussão/pergunta/comentário
+// ancorada no material. Sempre nasce por ação explícita — o pessoal fica separado.
+enum ContributionKind {
+  QUESTION
+  COMMENT
+  ANSWER
+  NOTE
+}
+
+enum ContributionAnchor {
+  BOOK
+  CHAPTER
+  PAGE
+  RANGE
+  CONCEPT
+}
+
+enum ContributionVisibility {
+  SPACE
+  PUBLIC
+}
+
+model Contribution {
+  id          String                 @id @default(uuid())
+  spaceId     String
+  authorId    String
+  bookId      String
+  kind        ContributionKind
+  anchorType  ContributionAnchor     @default(PAGE)
+  page        Int? // desnormalizado da âncora p/ filtrar rápido por página
+  quotedText  String? // trecho citado (RANGE) — legível mesmo se o render mudar
+  content     Json
+  contentText String
+  parentId    String? // resposta dentro de uma thread
+  visibility  ContributionVisibility @default(SPACE)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  deletedAt   DateTime?
+
+  space   StudySpace     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  author  User           @relation("ContribAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  book    Book           @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  parent  Contribution?  @relation("ContribThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Contribution[] @relation("ContribThread")
+
+  @@index([spaceId, page])
+  @@index([parentId])
 }
 
 // A relação do usuário com o livro (estado pessoal + preferências de leitura).

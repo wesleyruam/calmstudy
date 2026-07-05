@@ -14,6 +14,8 @@ import { ReaderRail } from "@/components/reader-rail";
 import { ReaderPagePanel, type PanelTab } from "@/components/reader-page-panel";
 import { ReaderTools, type ReaderTool } from "@/components/reader-tools";
 import { ReaderFind } from "@/components/reader-find";
+import { SpaceDiscussionPanel } from "@/components/space-discussion-panel";
+import { LayerSelector, type ReaderLayer } from "@/components/layer-selector";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Notebook,
@@ -58,6 +60,9 @@ export function PdfReader({ data }: { data: ReaderData }) {
   const [fullscreen, setFullscreen] = useState(false);
   const [fitWidth, setFitWidth] = useState(true);
   const [focus, setFocus] = useState(false);
+  const [layer, setLayer] = useState<ReaderLayer>("personal");
+
+  const activeSpace = layer === "personal" ? null : data.spaces.find((s) => s.id === layer) ?? null;
 
   const jumpTo = useCallback(
     (p: number) => setPage(Math.min(Math.max(1, p), numPages || 1)),
@@ -385,6 +390,19 @@ export function PdfReader({ data }: { data: ReaderData }) {
         )}
 
         <div className="flex flex-1 items-center justify-end gap-1">
+          {data.spaces.length > 0 && (
+            <div className="mr-1">
+              <LayerSelector
+                spaces={data.spaces}
+                value={layer}
+                onChange={(l) => {
+                  setLayer(l);
+                  setActiveHighlight(null);
+                  if (l !== "personal") setPanelOpen(true);
+                }}
+              />
+            </div>
+          )}
           <button
             onClick={() => setFindOpen((v) => !v)}
             className={[
@@ -532,6 +550,15 @@ export function PdfReader({ data }: { data: ReaderData }) {
           >
             <HighlightNotes highlightId={activeHighlight.id} />
           </HighlightPanel>
+        ) : activeSpace ? (
+          panelOpen && (
+            <SpaceDiscussionPanel
+              spaceId={activeSpace.id}
+              spaceName={activeSpace.name}
+              page={page}
+              onClose={() => setPanelOpen(false)}
+            />
+          )
         ) : (
           panelOpen && (
             <ReaderPagePanel

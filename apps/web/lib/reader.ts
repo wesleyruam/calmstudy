@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@calmstudy/db";
 import { currentUser } from "./study";
+import { getSpacesForBook } from "./contributions";
 
 export interface ReaderData {
   userBookId: string;
@@ -16,6 +17,8 @@ export interface ReaderData {
   totalSeconds: number;
   conceptCount: number;
   concepts: { id: string; title: string; color: string }[];
+  // espaços de estudo (deste livro) de que o usuário participa — camada de discussão
+  spaces: { id: string; name: string }[];
 }
 
 /** Dados para abrir um documento no leitor — só do dono (foco single-user até a auth). */
@@ -27,13 +30,14 @@ export async function getReaderData(userBookId: string): Promise<ReaderData | nu
   });
   if (!ub || ub.book.status !== "READY") return null;
 
-  const [sessionAgg, conceptBooks] = await Promise.all([
+  const [sessionAgg, conceptBooks, spaces] = await Promise.all([
     prisma.studySession.aggregate({ where: { userBookId }, _sum: { seconds: true } }),
     prisma.conceptBook.findMany({
       where: { userBookId },
       include: { concept: { select: { id: true, title: true, color: true } } },
       orderBy: { concept: { title: "asc" } },
     }),
+    getSpacesForBook(user.id, ub.book.id),
   ]);
 
   return {
@@ -53,5 +57,6 @@ export async function getReaderData(userBookId: string): Promise<ReaderData | nu
       title: cb.concept.title,
       color: cb.concept.color ?? "#94a3b8",
     })),
+    spaces: spaces.map((s) => ({ id: s.id, name: s.name })),
   };
 }
