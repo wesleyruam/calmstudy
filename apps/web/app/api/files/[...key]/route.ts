@@ -1,9 +1,24 @@
 import { NextResponse } from "next/server";
 import { FilesystemStorage } from "@calmstudy/infra";
+import { prisma } from "@calmstudy/db";
+import { currentUser } from "@/lib/study";
 
 export const runtime = "nodejs";
 
 const storage = new FilesystemStorage();
+
+// Só serve o arquivo se o usuário tem acesso ao Book correspondente — pelo
+// arquivo em si (books/…) ou pela capa (covers/…, referenciada em coverUrl).
+async function userCanAccess(userId: string, fileKey: string): Promise<boolean> {
+  const book = await prisma.book.findFirst({
+    where: {
+      userBooks: { some: { userId, deletedAt: null } },
+      OR: [{ fileKey }, { coverUrl: `/api/files/${fileKey}` }],
+    },
+    select: { id: true },
+  });
+  return !!book;
+}
 
 const CONTENT_TYPES: Record<string, string> = {
   pdf: "application/pdf",
@@ -23,6 +38,11 @@ export async function GET(
 ) {
   const { key } = await params;
   const fileKey = key.map(decodeURIComponent).join("/");
+
+  const user = await currentUser();
+  if (!(await userCanAccess(user.id, fileKey))) {
+    return NextResponse.json({ error: "Sem acesso." }, { status: 403 });
+  }
 
   try {
     const bytes = await storage.get(fileKey);

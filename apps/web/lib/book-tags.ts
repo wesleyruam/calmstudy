@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser } from "@calmstudy/infra";
+import { currentUser } from "./study";
 
 export interface BookTag {
   id: string;
@@ -11,7 +11,7 @@ export interface BookTag {
 
 // Tags aplicadas a livros (módulo 6, nível de biblioteca). Só as que marcam ≥1 livro.
 export async function getBookTags(): Promise<BookTag[]> {
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const tags = await prisma.tag.findMany({
     where: { userId: user.id, books: { some: {} } },
     include: { _count: { select: { books: true } } },

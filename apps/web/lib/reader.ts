@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser } from "@calmstudy/infra";
+import { currentUser } from "./study";
 
 export interface ReaderData {
   userBookId: string;
@@ -20,7 +20,7 @@ export interface ReaderData {
 
 /** Dados para abrir um documento no leitor — só do dono (foco single-user até a auth). */
 export async function getReaderData(userBookId: string): Promise<ReaderData | null> {
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const ub = await prisma.userBook.findFirst({
     where: { id: userBookId, userId: user.id, deletedAt: null },
     include: { book: true },

@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser } from "@calmstudy/infra";
+import { currentUser } from "./study";
 import { getConcepts } from "./concepts";
 import { serializeNote, type NoteDTO } from "./note-shared";
 import type { ConceptListItem } from "./concept-shared";
@@ -18,7 +18,7 @@ export interface KnowledgeData {
 
 // Carrega uma página livre (nota isFreePage) do usuário.
 export async function getFreePage(id: string): Promise<NoteDTO | null> {
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const note = await prisma.note.findFirst({
     where: { id, userId: user.id, isFreePage: true },
     include: { tags: { include: { tag: true } } },
@@ -28,7 +28,7 @@ export async function getFreePage(id: string): Promise<NoteDTO | null> {
 
 // Lista enxuta dos livros do usuário (para relacionar a conceitos etc.).
 export async function getBooksBrief(): Promise<{ userBookId: string; title: string }[]> {
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const ubs = await prisma.userBook.findMany({
     where: { userId: user.id, deletedAt: null },
     include: { book: { select: { title: true } } },
@@ -39,7 +39,7 @@ export async function getBooksBrief(): Promise<{ userBookId: string; title: stri
 
 // Base de conhecimento (módulo 22): conceitos + páginas livres (módulo 5).
 export async function getKnowledge(): Promise<KnowledgeData> {
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const [concepts, pages] = await Promise.all([
     getConcepts(),
     prisma.note.findMany({

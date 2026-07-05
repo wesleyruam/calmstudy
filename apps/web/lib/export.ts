@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser } from "@calmstudy/infra";
+import { currentUser } from "./study";
 import { getNotebook } from "./notebook";
 import { CATEGORY_META } from "./highlight-shared";
 
@@ -37,7 +37,7 @@ export async function buildBookExport(userBookId: string): Promise<BookExport | 
   const nb = await getNotebook(userBookId);
   if (!nb) return null;
 
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const concepts = await prisma.concept.findMany({
     where: { userId: user.id, books: { some: { userBookId } } },
     select: { id: true, title: true, description: true },

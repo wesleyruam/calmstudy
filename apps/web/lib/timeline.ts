@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser } from "@calmstudy/infra";
+import { currentUser } from "./study";
 import { serializeHighlight } from "./highlight-shared";
 import { serializeNote } from "./note-shared";
 import type { StudyHighlight } from "@/components/highlight-item";
@@ -28,7 +28,7 @@ function dayLabel(key: string): string {
 
 // Linha do tempo (módulo 14): o que foi produzido, por dia (mais recente primeiro).
 export async function getTimeline(): Promise<TimelineDay[]> {
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
 
   const [highlights, notes] = await Promise.all([
     prisma.highlight.findMany({

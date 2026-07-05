@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser } from "@calmstudy/infra";
+import { currentUser } from "./study";
 import { serializeHighlight, type HighlightDTO } from "./highlight-shared";
 import { serializeNote, type NoteDTO } from "./note-shared";
 
@@ -19,7 +19,7 @@ export interface ReviewData {
 // Modo Revisão (módulo 13): tudo que o usuário produziu, sobre TODOS os livros,
 // para revisar sem abrir nenhum PDF.
 export async function getReviewData(): Promise<ReviewData> {
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const highlights = await prisma.highlight.findMany({
     where: { userBook: { userId: user.id, deletedAt: null } },
     include: {

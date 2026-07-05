@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser, enqueueDocument } from "@calmstudy/infra";
+import { enqueueDocument } from "@calmstudy/infra";
+import { currentUser } from "@/lib/study";
 
 export const runtime = "nodejs";
 
 // Enfileira a geração de capa (coverOnly) para livros já importados sem capa.
 // Cobre PDF (render), EPUB/CBZ (imagem embutida) e MOBI (EXTH, best-effort).
 export async function POST() {
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const books = await prisma.book.findMany({
     where: {
       format: { in: ["PDF", "EPUB", "MOBI", "CBZ"] },

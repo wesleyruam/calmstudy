@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@calmstudy/db";
 import type { Prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser } from "@calmstudy/infra";
+import { currentUser } from "./study";
 
 export interface LibraryItem {
   userBookId: string;
@@ -90,7 +90,7 @@ export async function getLibrary(
   shelfId?: string,
   tagId?: string,
 ): Promise<LibraryItem[]> {
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const items = await prisma.userBook.findMany({
     where: whereFor(user.id, filter, shelfId, tagId),
     include: {

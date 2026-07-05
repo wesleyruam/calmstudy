@@ -1,8 +1,11 @@
 import { UploadButton } from "@/components/uploader";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { UserMenu } from "@/components/user-menu";
+import { currentUser } from "@/lib/study";
 
-// Navbar superior — vidro fosco, respira. Interatividade (busca, tema, perfil) entra na Fase 2.
-export function Navbar() {
+// Navbar superior — vidro fosco, respira.
+export async function Navbar() {
+  const user = await currentUser();
   return (
     <header className="sticky top-0 z-20 border-b border-[var(--color-line)] bg-[var(--color-paper)]/70 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-4 px-6">
@@ -31,7 +34,7 @@ export function Navbar() {
           <UploadButton label="Upload" variant="ghost" />
           <IconButton label="Notificações"><BellGlyph /></IconButton>
           <ThemeToggle />
-          <span className="ml-1 size-8 rounded-full bg-[var(--color-line)]" />
+          <UserMenu name={user.name} email={user.email} />
         </nav>
       </div>
     </header>

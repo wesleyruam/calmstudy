@@ -1,0 +1,7 @@
+import { AuthForm } from "@/components/auth-form";
+
+export const metadata = { title: "Entrar — CalmStudy" };
+
+export default function EntrarPage() {
+  return <AuthForm mode="login" />;
+}

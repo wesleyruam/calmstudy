@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser } from "@calmstudy/infra";
+import { currentUser } from "@/lib/study";
 
 export const runtime = "nodejs";
 
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Nome inválido." }, { status: 400 });
   }
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const shelf = await prisma.shelf.create({
     data: { userId: user.id, ...parsed.data },
   });

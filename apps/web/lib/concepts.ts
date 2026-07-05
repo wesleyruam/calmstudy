@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser } from "@calmstudy/infra";
+import { currentUser } from "./study";
 import { serializeHighlight } from "./highlight-shared";
 import { serializeNote } from "./note-shared";
 import type {
@@ -12,7 +12,7 @@ import type {
 
 // Lista de conceitos (base de conhecimento — módulo 22).
 export async function getConcepts(): Promise<ConceptListItem[]> {
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const concepts = await prisma.concept.findMany({
     where: { userId: user.id },
     include: {
@@ -40,7 +40,7 @@ export async function getConcepts(): Promise<ConceptListItem[]> {
 
 // Detalhe de um conceito (página do conceito — módulos 7/8).
 export async function getConceptDetail(id: string): Promise<ConceptDetail | null> {
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const c = await prisma.concept.findFirst({
     where: { id, userId: user.id },
     include: {
@@ -102,7 +102,7 @@ export async function getConceptDetail(id: string): Promise<ConceptDetail | null
 
 // Grafo de conceitos (mapa — módulo 23).
 export async function getGraph(): Promise<GraphData> {
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const [concepts, links] = await Promise.all([
     prisma.concept.findMany({
       where: { userId: user.id },

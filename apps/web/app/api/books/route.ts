@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
-import {
-  ingestUpload,
-  formatFromFilename,
-  getOrCreateDefaultUser,
-} from "@calmstudy/infra";
+import { ingestUpload, formatFromFilename } from "@calmstudy/infra";
+import { currentUser } from "@/lib/study";
 
 export const runtime = "nodejs";
 
@@ -21,7 +18,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Nenhum arquivo enviado." }, { status: 400 });
   }
 
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const created: { id: string; title: string }[] = [];
   const rejected: { name: string; reason: string }[] = [];
 

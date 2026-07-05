@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser } from "@calmstudy/infra";
+import { currentUser } from "./study";
 import { serializeHighlight, type HighlightDTO } from "./highlight-shared";
 import { serializeNote, type NoteDTO } from "./note-shared";
 import { serializeSummary, type SummaryDTO } from "./summary-shared";
@@ -29,7 +29,7 @@ export interface NotebookData {
 // Caderno do livro (módulo 4): agrega tudo que o usuário produziu lendo,
 // para revisar sem reabrir o PDF.
 export async function getNotebook(userBookId: string): Promise<NotebookData | null> {
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const ub = await prisma.userBook.findFirst({
     where: { id: userBookId, userId: user.id, deletedAt: null },
     include: { book: true },

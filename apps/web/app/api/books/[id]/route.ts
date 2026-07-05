@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser, FilesystemStorage, deleteCover } from "@calmstudy/infra";
+import { FilesystemStorage, deleteCover } from "@calmstudy/infra";
+import { currentUser } from "@/lib/study";
 
 export const runtime = "nodejs";
 
@@ -25,7 +26,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!parsed.success) {
     return NextResponse.json({ error: "Título inválido." }, { status: 400 });
   }
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const book = await ownedBook(id, user.id);
   if (!book) return NextResponse.json({ error: "Não encontrado." }, { status: 404 });
 
@@ -36,7 +37,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 // Excluir o livro: remove o arquivo, a capa e o registro (cascata apaga marcações).
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const book = await ownedBook(id, user.id);
   if (!book) return NextResponse.json({ error: "Não encontrado." }, { status: 404 });
 

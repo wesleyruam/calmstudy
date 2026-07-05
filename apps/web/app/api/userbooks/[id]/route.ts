@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser } from "@calmstudy/infra";
+import { currentUser } from "@/lib/study";
 
 export const runtime = "nodejs";
 
@@ -31,7 +31,7 @@ export async function PATCH(
   const touchedReading =
     parsed.data.lastPage !== undefined || parsed.data.progress !== undefined;
 
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const result = await prisma.userBook.updateMany({
     where: { id, userId: user.id },
     data: { ...parsed.data, ...(touchedReading ? { lastReadAt: new Date() } : {}) },

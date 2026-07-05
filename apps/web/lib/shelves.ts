@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser } from "@calmstudy/infra";
+import { currentUser } from "./study";
 
 export interface ShelfItem {
   id: string;
@@ -11,7 +11,7 @@ export interface ShelfItem {
 }
 
 export async function getShelves(): Promise<ShelfItem[]> {
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const shelves = await prisma.shelf.findMany({
     where: { userId: user.id },
     include: { _count: { select: { books: true } } },

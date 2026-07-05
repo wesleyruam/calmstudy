@@ -1,10 +1,23 @@
 import "server-only";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser } from "@calmstudy/infra";
+import { auth } from "@/auth";
 
-/** Usuário da sessão (usuário padrão até a Auth.js). */
-export function currentUser() {
-  return getOrCreateDefaultUser();
+export interface SessionUser {
+  id: string;
+  email: string;
+  name: string | null;
+}
+
+/** Usuário autenticado (sessão Auth.js). Lança se não houver sessão — o
+ * middleware já barra rotas sem login, então em uso normal sempre há usuário. */
+export async function currentUser(): Promise<SessionUser> {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Não autenticado");
+  return {
+    id: session.user.id,
+    email: session.user.email ?? "",
+    name: session.user.name ?? null,
+  };
 }
 
 /** Garante que o UserBook pertence ao usuário e não está na lixeira. */

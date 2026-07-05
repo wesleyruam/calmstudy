@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser } from "@calmstudy/infra";
+import { currentUser } from "./study";
 import type { ActivityDay, StatsData } from "./dashboard-shared";
 
 function dayKey(d: Date): string {
@@ -18,7 +18,7 @@ function dayLabel(key: string): string {
 
 // Estatísticas gerais (módulo 19) + histórico recente (módulo 20).
 export async function getStats(): Promise<StatsData> {
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const scope = { userBook: { userId: user.id, deletedAt: null } };
   const cutoff = new Date(Date.now() - 13 * 86400_000);
   cutoff.setHours(0, 0, 0, 0);

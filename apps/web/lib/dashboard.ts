@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser } from "@calmstudy/infra";
+import { currentUser } from "./study";
 import type { DashboardData, DaySeconds } from "./dashboard-shared";
 
 function dayKey(d: Date): string {
@@ -9,7 +9,7 @@ function dayKey(d: Date): string {
 
 // Dashboard do livro (módulo 10): tempo, progresso, contagens, metas, checklist.
 export async function getBookDashboard(userBookId: string): Promise<DashboardData | null> {
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const ub = await prisma.userBook.findFirst({
     where: { id: userBookId, userId: user.id, deletedAt: null },
     include: {

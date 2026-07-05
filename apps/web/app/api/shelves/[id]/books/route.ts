@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser } from "@calmstudy/infra";
+import { currentUser } from "@/lib/study";
 
 export const runtime = "nodejs";
 
@@ -21,7 +21,7 @@ export async function POST(
     return NextResponse.json({ error: "Payload inválido." }, { status: 400 });
   }
   const { userBookId, action } = parsed.data;
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
 
   // garante que prateleira e userbook são do usuário
   const [shelf, ub] = await Promise.all([

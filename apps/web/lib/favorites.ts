@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser } from "@calmstudy/infra";
+import { currentUser } from "./study";
 import { serializeHighlight } from "./highlight-shared";
 import { serializeNote } from "./note-shared";
 import type { StudyHighlight } from "@/components/highlight-item";
@@ -19,7 +19,7 @@ export interface FavoritesData {
 
 // Favoritos globais (módulo 17): livros e destaques marcados como favoritos.
 export async function getFavorites(): Promise<FavoritesData> {
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
 
   const [highlights, books] = await Promise.all([
     prisma.highlight.findMany({

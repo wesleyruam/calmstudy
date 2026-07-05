@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@calmstudy/db";
-import { getOrCreateDefaultUser } from "@calmstudy/infra";
+import { currentUser } from "./study";
 
 // Busca global (E5, módulo 18). FTS Postgres sobre colunas `search_tsv` geradas
 // (ver migration search_fts). Consulta direta via $queryRaw — mesmo padrão de
@@ -71,7 +71,7 @@ export async function searchAll(rawQuery: string): Promise<SearchResults> {
   const tsq = toPrefixTsQuery(query);
   if (!tsq) return { query, total: 0, groups: [] };
 
-  const user = await getOrCreateDefaultUser();
+  const user = await currentUser();
   const uid = user.id;
 
   type Row = Record<string, unknown>;
