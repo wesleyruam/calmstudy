@@ -24,6 +24,8 @@ import {
   Search,
   Maximize2,
   Minimize2,
+  MoveHorizontal,
+  Focus,
 } from "lucide-react";
 import type { HighlightDTO } from "@/lib/highlight-shared";
 import type { NoteDTO } from "@/lib/note-shared";
@@ -54,11 +56,45 @@ export function PdfReader({ data }: { data: ReaderData }) {
   const [tool, setTool] = useState<ReaderTool>("select");
   const [findOpen, setFindOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [fitWidth, setFitWidth] = useState(true);
+  const [focus, setFocus] = useState(false);
 
   const jumpTo = useCallback(
     (p: number) => setPage(Math.min(Math.max(1, p), numPages || 1)),
     [numPages],
   );
+
+  // Escala efetiva reportada pela página (fit-width) → alimenta o % e persistência.
+  const handleScaleChange = useCallback((s: number) => {
+    setScale((cur) => (Math.abs(cur - s) > 0.005 ? s : cur));
+  }, []);
+
+  // Hidrata/persiste preferências de UI do leitor (aba, painel, ferramenta, fit).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("reader:prefs");
+      if (!raw) return;
+      const p = JSON.parse(raw) as Partial<{
+        panelOpen: boolean;
+        panelTab: PanelTab;
+        tool: ReaderTool;
+        fitWidth: boolean;
+      }>;
+      if (typeof p.panelOpen === "boolean") setPanelOpen(p.panelOpen);
+      if (p.panelTab) setPanelTab(p.panelTab);
+      if (p.tool) setTool(p.tool);
+      if (typeof p.fitWidth === "boolean") setFitWidth(p.fitWidth);
+    } catch {
+      // localStorage indisponível — usa os padrões
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem("reader:prefs", JSON.stringify({ panelOpen, panelTab, tool, fitWidth }));
+    } catch {
+      // ignora
+    }
+  }, [panelOpen, panelTab, tool, fitWidth]);
 
   // Tela cheia (Fase C): alterna e acompanha o estado real do documento.
   const toggleFullscreen = useCallback(() => {
@@ -281,8 +317,10 @@ export function PdfReader({ data }: { data: ReaderData }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [go]);
 
-  const zoom = (d: number) =>
+  const zoom = (d: number) => {
+    setFitWidth(false);
     setScale((s) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, Math.round((s + d) * 10) / 10)));
+  };
 
   // Escopo por página + contadores da visão geral.
   const pageHighlights = highlights.filter((h) => (h.page ?? h.anchor?.page) === page);
@@ -379,6 +417,18 @@ export function PdfReader({ data }: { data: ReaderData }) {
           <ThemeToggle />
 
           <button
+            onClick={() => setFocus((v) => !v)}
+            className={[
+              "grid size-8 place-items-center rounded-full transition-colors hover:bg-[var(--color-line)]/60",
+              focus ? "bg-[var(--color-accent-soft)] text-[var(--color-ink)]" : "text-[var(--color-ink-soft)]",
+            ].join(" ")}
+            title={focus ? "Sair do modo foco" : "Modo foco (leitura limpa)"}
+            aria-label={focus ? "Sair do modo foco" : "Modo foco"}
+          >
+            <Focus className="size-4" />
+          </button>
+
+          <button
             onClick={toggleFullscreen}
             className="grid size-8 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60"
             title={fullscreen ? "Sair da tela cheia" : "Tela cheia"}
@@ -415,18 +465,18 @@ export function PdfReader({ data }: { data: ReaderData }) {
             onClose={() => setFindOpen(false)}
           />
         )}
-        <ReaderRail
-          userBookId={data.userBookId}
-          page={page}
-          numPages={numPages}
-          totalSeconds={data.totalSeconds}
-          counts={counts}
-          activeTab={panelTab}
-          onTool={openTool}
-        />
+        {!focus && (
+          <ReaderRail
+            userBookId={data.userBookId}
+            page={page}
+            numPages={numPages}
+            totalSeconds={data.totalSeconds}
+            counts={counts}
+          />
+        )}
 
         <div className="flex min-h-0 min-w-0 flex-1">
-          {mode === "single" && !loading && doc && !error && (
+          {mode === "single" && !loading && doc && !error && !focus && (
             <div className="flex w-14 shrink-0 items-center justify-center">
               <ReaderTools
                 tool={tool}
@@ -459,18 +509,20 @@ export function PdfReader({ data }: { data: ReaderData }) {
                 doc={doc}
                 page={page}
                 scale={scale}
+                fitWidth={fitWidth}
                 dark={dark}
                 highlights={highlights}
                 activeId={activeHighlight?.id ?? null}
                 tool={tool}
                 onCreate={createHighlight}
                 onOpen={setActiveHighlight}
+                onScaleChange={handleScaleChange}
               />
             )}
           </div>
         </div>
 
-        {activeHighlight ? (
+        {focus ? null : activeHighlight ? (
           <HighlightPanel
             key={activeHighlight.id}
             highlight={activeHighlight}
@@ -518,6 +570,17 @@ export function PdfReader({ data }: { data: ReaderData }) {
           </NavBtn>
         </div>
         <div className="flex items-center justify-end gap-1 text-sm text-[var(--color-ink-soft)]">
+          <button
+            onClick={() => setFitWidth(true)}
+            className={[
+              "mr-1 grid size-8 place-items-center rounded-full transition-colors hover:bg-[var(--color-line)]/60",
+              fitWidth ? "bg-[var(--color-accent-soft)] text-[var(--color-ink)]" : "",
+            ].join(" ")}
+            title="Ajustar à largura"
+            aria-label="Ajustar à largura"
+          >
+            <MoveHorizontal className="size-4" />
+          </button>
           <button
             onClick={() => zoom(-0.2)}
             className="grid size-8 place-items-center rounded-full hover:bg-[var(--color-line)]/60"

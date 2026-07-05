@@ -39,20 +39,27 @@ interface SelectionState {
   rects: HighlightRect[];
 }
 
+const FIT_MIN = 0.5;
+const FIT_MAX = 3;
+
 export function PdfPageView({
   doc,
   page,
   scale,
+  fitWidth,
   dark,
   highlights,
   activeId,
   tool,
   onCreate,
   onOpen,
+  onScaleChange,
 }: {
   doc: PdfDoc;
   page: number;
   scale: number;
+  // Quando true, a página é dimensionada para caber na largura disponível.
+  fitWidth: boolean;
   dark: boolean;
   highlights: HighlightDTO[];
   activeId: string | null;
@@ -60,6 +67,8 @@ export function PdfPageView({
   tool: "select" | HighlightCategory;
   onCreate: (h: NewHighlight) => void;
   onOpen: (h: HighlightDTO) => void;
+  // Informa ao leitor a escala efetivamente renderizada (p/ o % do rodapé).
+  onScaleChange?: (s: number) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -69,6 +78,46 @@ export function PdfPageView({
 
   const [dims, setDims] = useState({ w: 0, h: 0 });
   const [sel, setSel] = useState<SelectionState | null>(null);
+  const [renderScale, setRenderScale] = useState(scale);
+
+  // Zoom manual (fitWidth desligado) manda no renderScale.
+  useEffect(() => {
+    if (!fitWidth) setRenderScale(scale);
+  }, [scale, fitWidth]);
+
+  // Ajusta a escala para a página caber na largura do container de rolagem.
+  const fit = useCallback(() => {
+    const container = containerRef.current;
+    const parent = container?.parentElement;
+    if (!fitWidth || !parent || !container) return;
+    const avail = parent.clientWidth - 32; // px-4 (16px de cada lado)
+    const curW = container.getBoundingClientRect().width;
+    if (curW < 1 || avail < 1) return;
+    setRenderScale((rs) => {
+      const target = Math.min(FIT_MAX, Math.max(FIT_MIN, (rs * avail) / curW));
+      return Math.abs(target - rs) > 0.01 ? target : rs;
+    });
+  }, [fitWidth]);
+
+  // Reajusta quando o container muda de tamanho (janela, painel, modo foco).
+  useEffect(() => {
+    if (!fitWidth) return;
+    const parent = containerRef.current?.parentElement;
+    if (!parent) return;
+    const ro = new ResizeObserver(() => fit());
+    ro.observe(parent);
+    return () => ro.disconnect();
+  }, [fitWidth, fit]);
+
+  // Reajusta ao trocar de página/escala (tamanho renderizado muda).
+  useEffect(() => {
+    fit();
+  }, [dims.w, dims.h, fit]);
+
+  // Reporta a escala efetiva para o leitor (% do rodapé / persistência).
+  useEffect(() => {
+    onScaleChange?.(renderScale);
+  }, [renderScale, onScaleChange]);
 
   // Renderiza canvas + camada de texto sempre que página/escala mudam.
   useEffect(() => {
@@ -86,7 +135,7 @@ export function PdfPageView({
       const pdfPage = await doc.getPage(page);
       if (!active) return;
 
-      const viewport = pdfPage.getViewport({ scale });
+      const viewport = pdfPage.getViewport({ scale: renderScale });
       const dpr = window.devicePixelRatio || 1;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
@@ -110,7 +159,7 @@ export function PdfPageView({
       // (páginas com /Rotate); o CSS aplica a rotação para sobrepor ao canvas.
       textLayerTaskRef.current?.cancel?.();
       textLayerEl.replaceChildren();
-      textLayerEl.style.setProperty("--scale-factor", String(scale));
+      textLayerEl.style.setProperty("--scale-factor", String(renderScale));
       try {
         const textContent = await pdfPage.getTextContent();
         if (!active) return;
@@ -129,7 +178,7 @@ export function PdfPageView({
     return () => {
       active = false;
     };
-  }, [doc, page, scale]);
+  }, [doc, page, renderScale]);
 
   // Calcula a seleção atual na camada de texto (ou null).
   const computeSelection = useCallback((): SelectionState | null => {
