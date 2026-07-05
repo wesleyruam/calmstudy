@@ -15,6 +15,7 @@ import {
   PencilOff,
   Clock,
   Hash,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { getShelves } from "@/lib/shelves";
@@ -90,6 +91,7 @@ export async function Sidebar({
           <ul className="flex flex-col gap-0.5">
             <SideLink href="/revisao" icon={Repeat} label="Revisão" />
             <SideLink href="/conhecimento" icon={Brain} label="Conhecimento" />
+            <SideLink href="/espacos" icon={Users} label="Espaços" />
             <SideLink href="/mapa" icon={Waypoints} label="Mapa" />
             <SideLink href="/estatisticas" icon={ChartColumn} label="Estatísticas" />
             <SideLink href="/favoritos" icon={Star} label="Favoritos" />

@@ -84,6 +84,10 @@ model User {
   tags        Tag[]
   notes       Note[]
   concepts    Concept[]
+
+  ownedSpaces      StudySpace[]  @relation("SpaceOwner")
+  spaceMemberships SpaceMember[]
+  invitesCreated   SpaceInvite[] @relation("InviteCreator")
 }
 
 // O documento em si (fato objetivo, deduplicável entre usuários).
@@ -109,10 +113,93 @@ model Book {
   searchTsv Unsupported("tsvector")? @map("search_tsv")
 
   userBooks UserBook[]
+  spaces    StudySpace[]
 
   @@index([isbn])
   @@index([contentHash])
   @@index([searchTsv], type: Gin)
+}
+
+// ─────────────────────── Espaços de Estudo (colaboração) ───────────────────────
+// Camada colaborativa: ver docs/STUDY-SPACES.md. Princípio nº 0 — nada é
+// compartilhado sem ação explícita; a camada compartilhada é separada do pessoal.
+
+enum SpaceRole {
+  OWNER
+  MODERATOR
+  MEMBER
+  VIEWER
+}
+
+enum SpaceVisibility {
+  PRIVATE
+  PUBLIC
+}
+
+enum SpaceFileSharing {
+  HASH_MATCH // cada membro tem sua cópia; casa por contentHash (sem redistribuir)
+  SHARED_FILE // o espaço compartilha o arquivo (docs próprios/domínio público)
+}
+
+model StudySpace {
+  id          String           @id @default(uuid())
+  name        String
+  description String?
+  ownerId     String
+  bookId      String
+  visibility  SpaceVisibility  @default(PRIVATE)
+  fileSharing SpaceFileSharing @default(SHARED_FILE)
+  createdAt   DateTime         @default(now())
+
+  owner User @relation("SpaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  book  Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  members    SpaceMember[]
+  invites    SpaceInvite[]
+  objectives SpaceObjective[]
+
+  @@index([ownerId])
+  @@index([bookId])
+}
+
+model SpaceMember {
+  id            String    @id @default(uuid())
+  spaceId       String
+  userId        String
+  role          SpaceRole @default(MEMBER)
+  shareProgress Boolean   @default(false) // consentimento p/ progresso coletivo
+  joinedAt      DateTime  @default(now())
+
+  space StudySpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([spaceId, userId])
+  @@index([userId])
+}
+
+model SpaceInvite {
+  id          String    @id @default(uuid())
+  spaceId     String
+  code        String    @unique
+  role        SpaceRole @default(MEMBER)
+  createdById String
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  space     StudySpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  createdBy User       @relation("InviteCreator", fields: [createdById], references: [id], onDelete: Cascade)
+}
+
+model SpaceObjective {
+  id        String   @id @default(uuid())
+  spaceId   String
+  text      String
+  done      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  space StudySpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@index([spaceId])
 }
 
 // A relação do usuário com o livro (estado pessoal + preferências de leitura).
