@@ -17,6 +17,7 @@ import { ReaderFind } from "@/components/reader-find";
 import { DiscussionPanel } from "@/components/space-discussion-panel";
 import { LayerSelector, type ReaderLayer } from "@/components/layer-selector";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LoadingMark } from "@/components/logo";
 import {
   Notebook,
   ArrowLeft,
@@ -513,9 +514,7 @@ export function PdfReader({ data }: { data: ReaderData }) {
             {error ? (
               <p className="mt-20 text-sm text-[var(--color-ink-soft)]">{error}</p>
             ) : loading || !doc ? (
-              <p className="mt-20 animate-pulse text-sm text-[var(--color-ink-soft)]">
-                Abrindo documento…
-              </p>
+              <LoadingMark label="Abrindo documento…" className="mt-24" />
             ) : mode === "book" ? (
               <BookView
                 ref={bookRef}

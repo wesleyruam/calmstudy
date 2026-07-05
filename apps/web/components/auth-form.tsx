@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { BookOpen, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 // Formulário de login/cadastro (Fase 0). Cadastro reivindica conta sem senha,
 // preservando a biblioteca já existente (ex.: usuário padrão migrado).
@@ -50,11 +51,8 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   return (
     <main className="grid min-h-dvh place-items-center bg-[var(--color-paper)] px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center gap-2 text-center">
-          <span className="grid size-11 place-items-center rounded-xl bg-[var(--color-accent-soft)] text-[var(--color-accent)]">
-            <BookOpen className="size-6" />
-          </span>
-          <h1 className="font-serif text-2xl tracking-tight">CalmStudy</h1>
+        <div className="mb-8 flex flex-col items-center gap-3 text-center">
+          <Logo className="h-24" />
           <p className="text-sm text-[var(--color-ink-soft)]">
             {isRegister ? "Crie sua conta para começar a estudar." : "Entre para continuar seus estudos."}
           </p>
