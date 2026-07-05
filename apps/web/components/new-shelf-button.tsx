@@ -2,14 +2,21 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useDialog } from "@/components/dialog-provider";
 
-// Botão "+" que cria uma prateleira (prompt simples por ora; modal calmo na sequência).
+// Botão "+" que cria uma prateleira com um diálogo calmo.
 export function NewShelfButton() {
   const router = useRouter();
+  const dialog = useDialog();
   const [busy, setBusy] = useState(false);
 
   const create = async () => {
-    const name = window.prompt("Nome da prateleira");
+    const name = await dialog.prompt({
+      title: "Nova prateleira",
+      label: "Nome da prateleira",
+      placeholder: "Ex.: Filosofia, Para reler…",
+      confirmLabel: "Criar",
+    });
     if (!name?.trim()) return;
     setBusy(true);
     try {
