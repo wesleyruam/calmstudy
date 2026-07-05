@@ -5,6 +5,7 @@ import {
   Highlighter,
   MessageSquare,
   CircleHelp,
+  Link2,
   BookText,
   Notebook,
   type LucideIcon,
@@ -37,6 +38,7 @@ export function ReaderRail({
     { tab: "content", icon: Highlighter, label: "Destaques" },
     { tab: "notes", icon: MessageSquare, label: "Anotações" },
     { tab: "questions", icon: CircleHelp, label: "Perguntas" },
+    { tab: "links", icon: Link2, label: "Links" },
   ];
 
   return (

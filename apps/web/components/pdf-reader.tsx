@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import type { HighlightDTO } from "@/lib/highlight-shared";
 import type { NoteDTO } from "@/lib/note-shared";
+import type { PageLinkDTO } from "@/lib/page-link-shared";
 
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3;
@@ -47,6 +48,7 @@ export function PdfReader({ data }: { data: ReaderData }) {
   const [highlights, setHighlights] = useState<HighlightDTO[]>([]);
   const [activeHighlight, setActiveHighlight] = useState<HighlightDTO | null>(null);
   const [notes, setNotes] = useState<NoteDTO[]>([]);
+  const [links, setLinks] = useState<PageLinkDTO[]>([]);
   const [panelTab, setPanelTab] = useState<PanelTab>("content");
   const [panelOpen, setPanelOpen] = useState(true);
   const [tool, setTool] = useState<ReaderTool>("select");
@@ -137,6 +139,20 @@ export function PdfReader({ data }: { data: ReaderData }) {
     };
   }, [data.userBookId]);
 
+  // Carrega os links entre páginas do livro (aba Links do painel).
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/userbooks/${data.userBookId}/links`)
+      .then((r) => (r.ok ? r.json() : { links: [] }))
+      .then((d) => {
+        if (!cancelled) setLinks(d.links ?? []);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [data.userBookId]);
+
   const createHighlight = useCallback(
     async (h: NewHighlight) => {
       const res = await fetch(`/api/userbooks/${data.userBookId}/highlights`, {
@@ -176,6 +192,29 @@ export function PdfReader({ data }: { data: ReaderData }) {
     const res = await fetch(`/api/notes/${id}`, { method: "DELETE" });
     if (res.ok) setNotes((prev) => prev.filter((n) => n.id !== id));
   }, []);
+
+  // Cria/remove link entre páginas (partindo da página atual).
+  const createLink = useCallback(
+    async (toPage: number, label: string) => {
+      const res = await fetch(`/api/userbooks/${data.userBookId}/links`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fromPage: page, toPage, label }),
+      });
+      if (!res.ok) return;
+      const { link } = await res.json();
+      setLinks((prev) => [...prev, link]);
+    },
+    [data.userBookId, page],
+  );
+
+  const deleteLink = useCallback(
+    async (id: string) => {
+      const res = await fetch(`/api/userbooks/${data.userBookId}/links/${id}`, { method: "DELETE" });
+      if (res.ok) setLinks((prev) => prev.filter((l) => l.id !== id));
+    },
+    [data.userBookId],
+  );
 
   const openTool = useCallback((t: PanelTab) => {
     setActiveHighlight(null);
@@ -249,6 +288,7 @@ export function PdfReader({ data }: { data: ReaderData }) {
   const pageHighlights = highlights.filter((h) => (h.page ?? h.anchor?.page) === page);
   const standaloneNotes = notes.filter((n) => !n.highlightId && !n.isFreePage);
   const pageNotes = standaloneNotes.filter((n) => n.page === page);
+  const pageLinks = links.filter((l) => l.fromPage === page);
   const counts = {
     highlights: highlights.length,
     notes: standaloneNotes.filter((n) => n.kind === "NOTE").length,
@@ -444,14 +484,19 @@ export function PdfReader({ data }: { data: ReaderData }) {
           panelOpen && (
             <ReaderPagePanel
               page={page}
+              numPages={numPages}
               highlights={pageHighlights}
               notes={pageNotes}
               concepts={data.concepts}
+              links={pageLinks}
               tab={panelTab}
               onTab={setPanelTab}
               onOpenHighlight={setActiveHighlight}
               onCreateNote={createNote}
               onDeleteNote={deleteNote}
+              onCreateLink={createLink}
+              onDeleteLink={deleteLink}
+              onJump={jumpTo}
               onClose={() => setPanelOpen(false)}
             />
           )

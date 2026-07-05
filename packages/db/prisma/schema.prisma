@@ -156,9 +156,25 @@ model UserBook {
   sessions    StudySession[]
   goals       Goal[]
   tasks       BookTask[]
+  pageLinks   PageLink[]
 
   @@unique([userId, bookId])
   @@index([userId, status])
+}
+
+// Referência cruzada rotulada entre duas páginas do mesmo livro (leitor, aba Links).
+model PageLink {
+  id         String @id @default(uuid())
+  userBookId String
+  fromPage   Int
+  toPage     Int
+  label      String
+
+  createdAt DateTime @default(now())
+
+  userBook UserBook @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+
+  @@index([userBookId, fromPage])
 }
 
 // ──────────────────────────── Organização ────────────────────────────
