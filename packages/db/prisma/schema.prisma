@@ -160,6 +160,7 @@ model StudySpace {
   invites       SpaceInvite[]
   objectives    SpaceObjective[]
   contributions Contribution[]
+  artifacts     SpaceArtifact[]
 
   @@index([ownerId])
   @@index([bookId])
@@ -252,6 +253,49 @@ model Contribution {
 
   @@index([spaceId, page])
   @@index([parentId])
+}
+
+// Artefatos colaborativos do espaço (Fase 3): documentos co-editáveis por
+// qualquer membro, com histórico de versões e atribuição.
+enum ArtifactType {
+  SUMMARY // resumo por capítulo
+  GLOSSARY // termo do glossário
+  CONCEPT // conceito importante
+  REFERENCE // referência externa
+  EXERCISE // exercício
+}
+
+model SpaceArtifact {
+  id          String       @id @default(uuid())
+  spaceId     String
+  type        ArtifactType
+  title       String // capítulo/termo/título
+  anchor      Json? // { chapter?, page?, url? } — opcional
+  content     Json
+  contentText String
+  createdById String
+  updatedById String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  space     StudySpace         @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  revisions ArtifactRevision[]
+
+  @@index([spaceId, type])
+}
+
+model ArtifactRevision {
+  id          String   @id @default(uuid())
+  artifactId  String
+  editedById  String
+  title       String
+  contentText String
+  content     Json
+  editedAt    DateTime @default(now())
+
+  artifact SpaceArtifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+
+  @@index([artifactId])
 }
 
 // A relação do usuário com o livro (estado pessoal + preferências de leitura).

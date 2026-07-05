@@ -13,6 +13,7 @@ import {
   LogOut,
   Plus,
   Target,
+  FileText,
 } from "lucide-react";
 import {
   ROLE_LABEL,
@@ -125,14 +126,22 @@ export function SpaceHome({ space, myUserId }: { space: SpaceDetail; myUserId: s
             </span>
           </div>
         </div>
-        {space.book.userBookId && (
+        <div className="flex items-center gap-2">
           <Link
-            href={`/read/${space.book.userBookId}`}
-            className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+            href={`/espaco/${space.id}/artefatos`}
+            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-line)] px-4 py-2 text-sm transition-colors hover:bg-[var(--color-line)]/40"
           >
-            <BookOpen className="size-4" /> Abrir leitor
+            <FileText className="size-4" /> Artefatos
           </Link>
-        )}
+          {space.book.userBookId && (
+            <Link
+              href={`/read/${space.book.userBookId}`}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+            >
+              <BookOpen className="size-4" /> Abrir leitor
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
