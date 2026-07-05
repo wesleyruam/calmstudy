@@ -99,6 +99,7 @@ model Book {
   format      BookFormat
   fileKey     String // chave no StorageProvider (FS/MinIO)
   fileSize    BigInt
+  contentHash String? // sha256 do arquivo — dedup e casamento de edição (Espaços de Estudo)
   status      BookStatus @default(UPLOADING)
   metadata    Json       @default("{}") // ano, editora, categorias, específicos do formato
   textContent String? // texto extraído (FTS) — mover p/ tabela à parte se crescer
@@ -110,6 +111,7 @@ model Book {
   userBooks UserBook[]
 
   @@index([isbn])
+  @@index([contentHash])
   @@index([searchTsv], type: Gin)
 }
 

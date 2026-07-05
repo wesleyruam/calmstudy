@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { prisma, type BookFormat } from "@calmstudy/db";
 import { FilesystemStorage } from "./storage/filesystem.js";
 import { enqueueDocument } from "./queue.js";
@@ -36,6 +36,16 @@ export async function ingestUpload(params: {
 }) {
   const { userId, filename, format, bytes } = params;
 
+  const contentHash = createHash("sha256").update(bytes).digest("hex");
+
+  // Dedup por usuário: se ele já tem exatamente este arquivo, reaproveita o Book
+  // (evita duplicar biblioteca). Casamento entre usuários fica p/ os Espaços.
+  const existing = await prisma.userBook.findFirst({
+    where: { userId, deletedAt: null, book: { contentHash } },
+    include: { book: { include: { userBooks: true } } },
+  });
+  if (existing) return existing.book;
+
   const fileKey = `books/${randomUUID()}/${filename}`;
   await storage.put(fileKey, bytes);
 
@@ -45,6 +55,7 @@ export async function ingestUpload(params: {
       format,
       fileKey,
       fileSize: BigInt(bytes.length),
+      contentHash,
       status: "PROCESSING",
       userBooks: {
         create: { userId },
