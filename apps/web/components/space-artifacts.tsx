@@ -9,6 +9,7 @@ import {
   type ArtifactRevisionDTO,
   type ArtifactType,
 } from "@/lib/artifact-shared";
+import { useDialog } from "@/components/dialog-provider";
 
 export function SpaceArtifacts({ spaceId, initial }: { spaceId: string; initial: ArtifactDTO[] }) {
   const [items, setItems] = useState<ArtifactDTO[]>(initial);
@@ -86,11 +87,18 @@ function Group({
 }
 
 function ArtifactCard({ a, spaceId, onChange }: { a: ArtifactDTO; spaceId: string; onChange: () => void }) {
+  const dialog = useDialog();
   const [editing, setEditing] = useState(false);
   const [history, setHistory] = useState<ArtifactRevisionDTO[] | null>(null);
 
   async function remove() {
-    if (!confirm(`Excluir "${a.title}"?`)) return;
+    const ok = await dialog.confirm({
+      title: `Excluir "${a.title}"?`,
+      message: "O artefato e seu histórico serão removidos para todo o espaço.",
+      confirmLabel: "Excluir",
+      danger: true,
+    });
+    if (!ok) return;
     const res = await fetch(`/api/spaces/${spaceId}/artifacts/${a.id}`, { method: "DELETE" });
     if (res.ok) onChange();
   }

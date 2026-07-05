@@ -24,9 +24,11 @@ import {
   type SpaceInviteDTO,
   type SpaceObjectiveDTO,
 } from "@/lib/space-shared";
+import { useDialog } from "@/components/dialog-provider";
 
 export function SpaceHome({ space, myUserId }: { space: SpaceDetail; myUserId: string }) {
   const router = useRouter();
+  const dialog = useDialog();
   const manage = canManage(space.myRole);
   const isOwner = space.myRole === "OWNER";
 
@@ -76,13 +78,24 @@ export function SpaceHome({ space, myUserId }: { space: SpaceDetail; myUserId: s
 
   async function leave() {
     if (!myMember) return;
-    if (!confirm("Sair deste espaço? Sua biblioteca e anotações pessoais permanecem.")) return;
+    const ok = await dialog.confirm({
+      title: "Sair deste espaço?",
+      message: "Sua biblioteca e anotações pessoais permanecem com você.",
+      confirmLabel: "Sair",
+    });
+    if (!ok) return;
     await fetch(`/api/spaces/${space.id}/members/${myMember.id}`, { method: "DELETE" });
     router.push("/espacos");
   }
 
   async function removeSpace() {
-    if (!confirm("Excluir o espaço para todos? Nada pessoal dos membros é apagado.")) return;
+    const ok = await dialog.confirm({
+      title: "Excluir o espaço para todos?",
+      message: "A camada compartilhada é apagada. Nada pessoal dos membros é afetado.",
+      confirmLabel: "Excluir espaço",
+      danger: true,
+    });
+    if (!ok) return;
     await fetch(`/api/spaces/${space.id}`, { method: "DELETE" });
     router.push("/espacos");
   }

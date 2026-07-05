@@ -22,6 +22,7 @@ import TaskItem from "@tiptap/extension-task-item";
 import { Table, TableRow, TableHeader, TableCell } from "@tiptap/extension-table";
 import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
+import { useDialog, type DialogApi } from "@/components/dialog-provider";
 import type { TiptapDoc } from "@/lib/note-shared";
 
 // Extensões compartilhadas entre o editor e o render read-only do caderno.
@@ -81,6 +82,7 @@ function hasContent(doc: TiptapDoc): boolean {
 }
 
 function Toolbar({ editor }: { editor: Editor }) {
+  const dialog = useDialog();
   const btn = (active: boolean) =>
     [
       "grid size-7 place-items-center rounded text-xs transition-colors",
@@ -167,7 +169,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       </button>
       <button
         className={btn(editor.isActive("link"))}
-        onClick={() => setLink(editor)}
+        onClick={() => void setLink(editor, dialog)}
         title="Link"
       >
         <LinkIcon className={ico} />
@@ -181,7 +183,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       >
         <TableIcon className={ico} />
       </button>
-      <button className={btn(false)} onClick={() => addImage(editor)} title="Imagem">
+      <button className={btn(false)} onClick={() => void addImage(editor, dialog)} title="Imagem">
         <ImageIcon className={ico} />
       </button>
     </div>
@@ -192,9 +194,16 @@ function Sep() {
   return <span className="mx-0.5 h-4 w-px bg-[var(--color-line)]" />;
 }
 
-function setLink(editor: Editor) {
+async function setLink(editor: Editor, dialog: DialogApi) {
   const prev = editor.getAttributes("link").href as string | undefined;
-  const url = window.prompt("URL do link", prev ?? "https://");
+  const url = await dialog.prompt({
+    title: "Inserir link",
+    label: "URL (deixe vazio para remover)",
+    placeholder: "https://",
+    defaultValue: prev ?? "https://",
+    confirmLabel: "Aplicar",
+    allowEmpty: true,
+  });
   if (url === null) return;
   if (url === "") {
     editor.chain().focus().extendMarkRange("link").unsetLink().run();
@@ -203,7 +212,12 @@ function setLink(editor: Editor) {
   editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
 }
 
-function addImage(editor: Editor) {
-  const url = window.prompt("URL da imagem");
+async function addImage(editor: Editor, dialog: DialogApi) {
+  const url = await dialog.prompt({
+    title: "Inserir imagem",
+    label: "URL da imagem",
+    placeholder: "https://…",
+    confirmLabel: "Inserir",
+  });
   if (url) editor.chain().focus().setImage({ src: url }).run();
 }

@@ -28,7 +28,7 @@ export function NewShelfButton() {
       if (!res.ok) throw new Error();
       router.refresh();
     } catch {
-      alert("Não foi possível criar a prateleira.");
+      await dialog.alert({ title: "Não foi possível criar a prateleira.", message: "Tente novamente." });
     } finally {
       setBusy(false);
     }

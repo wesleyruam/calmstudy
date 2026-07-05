@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Trash2, ArrowLeft } from "lucide-react";
 import { RichTextEditor } from "@/components/rich-text-editor";
+import { useDialog } from "@/components/dialog-provider";
 import type { NoteDTO, TiptapDoc } from "@/lib/note-shared";
 
 // Editor livre (módulo 5): página solta (nota isFreePage) com autosave.
 export function FreePageView({ note }: { note: NoteDTO }) {
   const router = useRouter();
+  const dialog = useDialog();
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function save(body: Record<string, unknown>) {
@@ -24,7 +26,13 @@ export function FreePageView({ note }: { note: NoteDTO }) {
   }
 
   async function remove() {
-    if (!window.confirm("Excluir esta página?")) return;
+    const ok = await dialog.confirm({
+      title: "Excluir esta página?",
+      message: "Esta ação não pode ser desfeita.",
+      confirmLabel: "Excluir",
+      danger: true,
+    });
+    if (!ok) return;
     const res = await fetch(`/api/notes/${note.id}`, { method: "DELETE" });
     if (res.ok) router.push("/conhecimento");
   }

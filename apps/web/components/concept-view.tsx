@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Star, Trash2, ArrowLeft } from "lucide-react";
 import { RichTextEditor } from "@/components/rich-text-editor";
 import { HighlightItem } from "@/components/highlight-item";
+import { useDialog } from "@/components/dialog-provider";
 import type { ConceptDetail } from "@/lib/concept-shared";
 import type { TiptapDoc } from "@/lib/note-shared";
 
@@ -19,6 +20,7 @@ export function ConceptView({
   allBooks: { userBookId: string; title: string }[];
 }) {
   const router = useRouter();
+  const dialog = useDialog();
   const [c, setC] = useState<ConceptDetail>(initial);
   const [linkInput, setLinkInput] = useState("");
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -67,7 +69,13 @@ export function ConceptView({
     if (res.ok) setC((await res.json()).concept);
   }
   async function removeConcept() {
-    if (!window.confirm(`Excluir o conceito "${c.title}"?`)) return;
+    const ok = await dialog.confirm({
+      title: `Excluir o conceito "${c.title}"?`,
+      message: "O conteúdo e os vínculos deste conceito serão removidos.",
+      confirmLabel: "Excluir",
+      danger: true,
+    });
+    if (!ok) return;
     const res = await fetch(`/api/concepts/${c.id}`, { method: "DELETE" });
     if (res.ok) router.push("/conhecimento");
   }

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Download } from "lucide-react";
+import { useDialog } from "@/components/dialog-provider";
 
 async function uploadFiles(files: FileList | File[]): Promise<void> {
   const form = new FormData();
@@ -24,6 +25,7 @@ export function UploadButton({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const dialog = useDialog();
   const [busy, setBusy] = useState(false);
 
   const onPick = useCallback(
@@ -34,12 +36,15 @@ export function UploadButton({
         await uploadFiles(files);
         router.refresh();
       } catch (e) {
-        alert(e instanceof Error ? e.message : "Falha no upload.");
+        await dialog.alert({
+          title: "Falha no upload",
+          message: e instanceof Error ? e.message : "Tente novamente.",
+        });
       } finally {
         setBusy(false);
       }
     },
-    [router],
+    [router, dialog],
   );
 
   const cls =
@@ -67,6 +72,7 @@ export function UploadButton({
 /** Overlay de arrastar-e-soltar na página inteira. */
 export function DropOverlay() {
   const router = useRouter();
+  const dialog = useDialog();
   const [over, setOver] = useState(false);
   const depth = useRef(0);
 
@@ -91,7 +97,10 @@ export function DropOverlay() {
           await uploadFiles(files);
           router.refresh();
         } catch (err) {
-          alert(err instanceof Error ? err.message : "Falha no upload.");
+          await dialog.alert({
+            title: "Falha no upload",
+            message: err instanceof Error ? err.message : "Tente novamente.",
+          });
         }
       }
     };
@@ -106,7 +115,7 @@ export function DropOverlay() {
       window.removeEventListener("dragover", onOver);
       window.removeEventListener("drop", onDrop);
     };
-  }, [router]);
+  }, [router, dialog]);
 
   if (!over) return null;
   return (

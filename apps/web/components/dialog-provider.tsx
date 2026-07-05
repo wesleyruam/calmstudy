@@ -14,6 +14,9 @@ type PromptOptions = {
   defaultValue?: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  // Por padrão um campo vazio resolve null (equivale a cancelar). Com allowEmpty,
+  // confirmar com o campo vazio resolve "" (ex.: limpar um link).
+  allowEmpty?: boolean;
 };
 
 type ConfirmOptions = {
@@ -24,14 +27,22 @@ type ConfirmOptions = {
   danger?: boolean;
 };
 
-type DialogApi = {
+type AlertOptions = {
+  title: string;
+  message?: string;
+  confirmLabel?: string;
+};
+
+export type DialogApi = {
   prompt: (opts: PromptOptions) => Promise<string | null>;
   confirm: (opts: ConfirmOptions) => Promise<boolean>;
+  alert: (opts: AlertOptions) => Promise<void>;
 };
 
 type PromptState = PromptOptions & { kind: "prompt"; resolve: (v: string | null) => void };
 type ConfirmState = ConfirmOptions & { kind: "confirm"; resolve: (v: boolean) => void };
-type DialogState = PromptState | ConfirmState;
+type AlertState = AlertOptions & { kind: "alert"; resolve: () => void };
+type DialogState = PromptState | ConfirmState | AlertState;
 
 const DialogContext = createContext<DialogApi | null>(null);
 
@@ -54,11 +65,16 @@ export function DialogProvider({ children }: { children: React.ReactNode }) {
       new Promise<boolean>((resolve) => setState({ ...opts, kind: "confirm", resolve })),
     [],
   );
+  const alert = useCallback(
+    (opts: AlertOptions) =>
+      new Promise<void>((resolve) => setState({ ...opts, kind: "alert", resolve })),
+    [],
+  );
 
   const close = useCallback(() => setState(null), []);
 
   return (
-    <DialogContext.Provider value={{ prompt, confirm }}>
+    <DialogContext.Provider value={{ prompt, confirm, alert }}>
       {children}
       {state && <DialogHost state={state} close={close} />}
     </DialogContext.Provider>
@@ -76,13 +92,17 @@ function DialogHost({ state, close }: { state: DialogState; close: () => void })
 
   const cancel = useCallback(() => {
     if (state.kind === "prompt") state.resolve(null);
-    else state.resolve(false);
+    else if (state.kind === "confirm") state.resolve(false);
+    else state.resolve();
     close();
   }, [state, close]);
 
   const confirmAction = useCallback(() => {
-    if (state.kind === "prompt") state.resolve(value.trim() ? value.trim() : null);
-    else state.resolve(true);
+    if (state.kind === "prompt") {
+      const trimmed = value.trim();
+      state.resolve(trimmed || state.allowEmpty ? trimmed : null);
+    } else if (state.kind === "confirm") state.resolve(true);
+    else state.resolve();
     close();
   }, [state, value, close]);
 
@@ -95,8 +115,10 @@ function DialogHost({ state, close }: { state: DialogState; close: () => void })
   }, [cancel]);
 
   const danger = state.kind === "confirm" && state.danger;
-  const confirmLabel = state.confirmLabel ?? (state.kind === "prompt" ? "Salvar" : "Confirmar");
-  const cancelLabel = state.cancelLabel ?? "Cancelar";
+  const confirmLabel =
+    state.confirmLabel ??
+    (state.kind === "prompt" ? "Salvar" : state.kind === "alert" ? "OK" : "Confirmar");
+  const cancelLabel = (state.kind !== "alert" && state.cancelLabel) || "Cancelar";
 
   return createPortal(
     <div
@@ -140,12 +162,14 @@ function DialogHost({ state, close }: { state: DialogState; close: () => void })
         )}
 
         <div className="mt-5 flex justify-end gap-2">
-          <button
-            onClick={cancel}
-            className="rounded-xl border border-[var(--color-line)] px-4 py-2 text-sm text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/50"
-          >
-            {cancelLabel}
-          </button>
+          {state.kind !== "alert" && (
+            <button
+              onClick={cancel}
+              className="rounded-xl border border-[var(--color-line)] px-4 py-2 text-sm text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/50"
+            >
+              {cancelLabel}
+            </button>
+          )}
           <button
             onClick={confirmAction}
             className={`rounded-xl px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 ${

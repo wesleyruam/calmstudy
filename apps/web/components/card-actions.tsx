@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Star, Notebook, ChartColumn, Pencil, Check, Trash2, Ellipsis } from "lucide-react";
+import { useDialog } from "@/components/dialog-provider";
 
 export interface ShelfOption {
   id: string;
@@ -35,6 +36,7 @@ export function CardActions({
   tags: TagOption[];
 }) {
   const router = useRouter();
+  const dialog = useDialog();
   const [favorite, setFavorite] = useState(initialFavorite);
   const [shelfIds, setShelfIds] = useState<string[]>(initialShelfIds);
   const [bookTags, setBookTags] = useState<TagOption[]>(initialTags);
@@ -115,7 +117,12 @@ export function CardActions({
   const rename = async (e: React.MouseEvent) => {
     e.preventDefault();
     setMenuOpen(false);
-    const name = window.prompt("Renomear livro", title);
+    const name = await dialog.prompt({
+      title: "Renomear livro",
+      label: "Novo título",
+      defaultValue: title,
+      confirmLabel: "Renomear",
+    });
     if (!name?.trim() || name.trim() === title) return;
     try {
       const res = await fetch(`/api/books/${bookId}`, {
@@ -126,20 +133,26 @@ export function CardActions({
       if (!res.ok) throw new Error();
       router.refresh();
     } catch {
-      alert("Não foi possível renomear.");
+      await dialog.alert({ title: "Não foi possível renomear.", message: "Tente novamente." });
     }
   };
 
   const remove = async (e: React.MouseEvent) => {
     e.preventDefault();
     setMenuOpen(false);
-    if (!window.confirm(`Excluir "${title}"? Esta ação não pode ser desfeita.`)) return;
+    const ok = await dialog.confirm({
+      title: `Excluir "${title}"?`,
+      message: "Esta ação não pode ser desfeita.",
+      confirmLabel: "Excluir",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       const res = await fetch(`/api/books/${bookId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       router.refresh();
     } catch {
-      alert("Não foi possível excluir.");
+      await dialog.alert({ title: "Não foi possível excluir.", message: "Tente novamente." });
     }
   };
 
