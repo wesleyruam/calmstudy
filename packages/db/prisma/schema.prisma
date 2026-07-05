@@ -245,14 +245,30 @@ model Contribution {
   updatedAt   DateTime               @updatedAt
   deletedAt   DateTime?
 
-  space   StudySpace     @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  author  User           @relation("ContribAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  book    Book           @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  parent  Contribution?  @relation("ContribThread", fields: [parentId], references: [id], onDelete: Cascade)
-  replies Contribution[] @relation("ContribThread")
+  space   StudySpace           @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  author  User                 @relation("ContribAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  book    Book                 @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  parent  Contribution?        @relation("ContribThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Contribution[]       @relation("ContribThread")
+  reports ContributionReport[]
 
   @@index([spaceId, page])
   @@index([parentId])
+  @@index([bookId, page, visibility]) // camada da comunidade (público por livro+página)
+}
+
+// Denúncia de contribuição (moderação, Fase 4). Um usuário denuncia uma vez.
+model ContributionReport {
+  id             String   @id @default(uuid())
+  contributionId String
+  reporterId     String
+  reason         String?
+  createdAt      DateTime @default(now())
+
+  contribution Contribution @relation(fields: [contributionId], references: [id], onDelete: Cascade)
+
+  @@unique([contributionId, reporterId])
+  @@index([contributionId])
 }
 
 // Artefatos colaborativos do espaço (Fase 3): documentos co-editáveis por

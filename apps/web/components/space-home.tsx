@@ -14,6 +14,8 @@ import {
   Plus,
   Target,
   FileText,
+  Globe,
+  Lock,
 } from "lucide-react";
 import {
   ROLE_LABEL,
@@ -31,7 +33,17 @@ export function SpaceHome({ space, myUserId }: { space: SpaceDetail; myUserId: s
   const [invites, setInvites] = useState<SpaceInviteDTO[]>(space.invites);
   const [objectives, setObjectives] = useState<SpaceObjectiveDTO[]>(space.objectives);
   const [shareProgress, setShareProgress] = useState(space.myShareProgress);
+  const [visibility, setVisibility] = useState(space.visibility);
   const myMember = space.members.find((m) => m.userId === myUserId);
+
+  async function setSpaceVisibility(v: "PRIVATE" | "PUBLIC") {
+    setVisibility(v);
+    await fetch(`/api/spaces/${space.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ visibility: v }),
+    });
+  }
 
   async function genInvite() {
     const res = await fetch(`/api/spaces/${space.id}/invites`, {
@@ -121,9 +133,15 @@ export function SpaceHome({ space, myUserId }: { space: SpaceDetail; myUserId: s
               {space.book.author ? ` · ${space.book.author}` : ""}
             </p>
             {space.description && <p className="mt-2 max-w-xl text-sm">{space.description}</p>}
-            <span className="mt-2 inline-block rounded-full bg-[var(--color-accent-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--color-accent)]">
-              Você é {ROLE_LABEL[space.myRole]}
-            </span>
+            <div className="mt-2 flex items-center gap-2">
+              <span className="inline-block rounded-full bg-[var(--color-accent-soft)] px-2 py-0.5 text-[11px] font-medium text-[var(--color-accent)]">
+                Você é {ROLE_LABEL[space.myRole]}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--color-line)] px-2 py-0.5 text-[11px] text-[var(--color-ink-soft)]">
+                {visibility === "PUBLIC" ? <Globe className="size-3" /> : <Lock className="size-3" />}
+                {visibility === "PUBLIC" ? "Público" : "Privado"}
+              </span>
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -237,6 +255,32 @@ export function SpaceHome({ space, myUserId }: { space: SpaceDetail; myUserId: s
               </ul>
             )}
           </section>
+
+          {isOwner && (
+            <section className="space-y-2">
+              <h2 className="flex items-center gap-2 text-sm font-medium">
+                <Globe className="size-4" /> Visibilidade
+              </h2>
+              <div className="flex rounded-full border border-[var(--color-line)] p-0.5 text-xs">
+                {(["PRIVATE", "PUBLIC"] as const).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setSpaceVisibility(v)}
+                    className={[
+                      "flex-1 rounded-full px-3 py-1 transition-colors",
+                      visibility === v ? "bg-[var(--color-accent-soft)] font-medium text-[var(--color-ink)]" : "text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]",
+                    ].join(" ")}
+                  >
+                    {v === "PRIVATE" ? "Privado (por convite)" : "Público (descobrível)"}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] text-[var(--color-ink-soft)]">
+                Público deixa o espaço aparecer na descoberta e qualquer um pode entrar. Não muda a
+                visibilidade do conteúdo — cada contribuição só vira pública se o autor escolher.
+              </p>
+            </section>
+          )}
 
           <section className="border-t border-[var(--color-line)] pt-4">
             {isOwner ? (

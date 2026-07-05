@@ -21,5 +21,9 @@ export interface ContributionDTO {
   author: ContributionAuthor;
   createdAt: string;
   canDelete: boolean;
+  isPublic: boolean;
+  canSetVisibility: boolean; // autor pode alternar espaço/público
+  spaceName?: string | null; // preenchido na camada da comunidade
+  reportCount?: number; // visível só p/ moderadores do espaço
   replies: ContributionDTO[];
 }

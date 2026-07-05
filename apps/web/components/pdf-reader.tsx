@@ -14,7 +14,7 @@ import { ReaderRail } from "@/components/reader-rail";
 import { ReaderPagePanel, type PanelTab } from "@/components/reader-page-panel";
 import { ReaderTools, type ReaderTool } from "@/components/reader-tools";
 import { ReaderFind } from "@/components/reader-find";
-import { SpaceDiscussionPanel } from "@/components/space-discussion-panel";
+import { DiscussionPanel } from "@/components/space-discussion-panel";
 import { LayerSelector, type ReaderLayer } from "@/components/layer-selector";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -62,7 +62,10 @@ export function PdfReader({ data }: { data: ReaderData }) {
   const [focus, setFocus] = useState(false);
   const [layer, setLayer] = useState<ReaderLayer>("personal");
 
-  const activeSpace = layer === "personal" ? null : data.spaces.find((s) => s.id === layer) ?? null;
+  const activeSpace =
+    layer === "personal" || layer === "community" ? null : data.spaces.find((s) => s.id === layer) ?? null;
+  const isCommunity = layer === "community";
+  const showLayers = data.spaces.length > 0 || data.communityCount > 0;
 
   const jumpTo = useCallback(
     (p: number) => setPage(Math.min(Math.max(1, p), numPages || 1)),
@@ -390,10 +393,11 @@ export function PdfReader({ data }: { data: ReaderData }) {
         )}
 
         <div className="flex flex-1 items-center justify-end gap-1">
-          {data.spaces.length > 0 && (
+          {showLayers && (
             <div className="mr-1">
               <LayerSelector
                 spaces={data.spaces}
+                community={data.communityCount > 0}
                 value={layer}
                 onChange={(l) => {
                   setLayer(l);
@@ -552,9 +556,22 @@ export function PdfReader({ data }: { data: ReaderData }) {
           </HighlightPanel>
         ) : activeSpace ? (
           panelOpen && (
-            <SpaceDiscussionPanel
+            <DiscussionPanel
+              mode="space"
+              title={activeSpace.name}
+              subtitle="Discussão"
               spaceId={activeSpace.id}
-              spaceName={activeSpace.name}
+              page={page}
+              onClose={() => setPanelOpen(false)}
+            />
+          )
+        ) : isCommunity ? (
+          panelOpen && (
+            <DiscussionPanel
+              mode="community"
+              title="Comunidade"
+              subtitle="Conhecimento público"
+              bookId={data.bookId}
               page={page}
               onClose={() => setPanelOpen(false)}
             />

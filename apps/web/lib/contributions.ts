@@ -13,18 +13,32 @@ export async function getSpacesForBook(userId: string, bookId: string) {
   return members.map((m) => ({ id: m.space.id, name: m.space.name, role: m.role as SpaceRole }));
 }
 
+/** Nº de contribuições públicas para este livro (habilita a camada Comunidade). */
+export function countPublicContributions(bookId: string) {
+  return prisma.contribution.count({ where: { bookId, visibility: "PUBLIC", deletedAt: null } });
+}
+
 type Row = {
   id: string;
   kind: string;
   page: number | null;
   quotedText: string | null;
   contentText: string;
+  visibility: string;
   authorId: string;
   createdAt: Date;
   author: { id: string; name: string | null };
+  space?: { name: string } | null;
+  _count?: { reports: number } | null;
 };
 
-function toDTO(r: Row, viewerId: string, canModerate: boolean, replies: ContributionDTO[] = []): ContributionDTO {
+function toDTO(
+  r: Row,
+  viewerId: string,
+  canModerate: boolean,
+  opts: { withSpaceName?: boolean; withReports?: boolean } = {},
+  replies: ContributionDTO[] = [],
+): ContributionDTO {
   return {
     id: r.id,
     kind: r.kind as ContributionKind,
@@ -34,9 +48,18 @@ function toDTO(r: Row, viewerId: string, canModerate: boolean, replies: Contribu
     author: { id: r.author.id, name: r.author.name },
     createdAt: r.createdAt.toISOString(),
     canDelete: r.authorId === viewerId || canModerate,
+    isPublic: r.visibility === "PUBLIC",
+    canSetVisibility: r.authorId === viewerId,
+    ...(opts.withSpaceName ? { spaceName: r.space?.name ?? null } : {}),
+    ...(opts.withReports ? { reportCount: r._count?.reports ?? 0 } : {}),
     replies,
   };
 }
+
+const SELECT = {
+  id: true, kind: true, page: true, quotedText: true, contentText: true, visibility: true,
+  authorId: true, createdAt: true, author: { select: { id: true, name: true } },
+} as const;
 
 /** Threads (topo + respostas) de uma página, para um membro do espaço. */
 export async function listPageContributions(
@@ -50,30 +73,53 @@ export async function listPageContributions(
   });
   if (!member) return null;
   const canModerate = canManage(member.role as SpaceRole);
-
-  const select = {
-    id: true,
-    kind: true,
-    page: true,
-    quotedText: true,
-    contentText: true,
-    authorId: true,
-    createdAt: true,
-    author: { select: { id: true, name: true } },
-  };
+  const opts = { withReports: canModerate };
 
   const tops = await prisma.contribution.findMany({
     where: { spaceId, page, parentId: null, deletedAt: null },
     orderBy: { createdAt: "asc" },
-    select: { ...select, replies: { where: { deletedAt: null }, orderBy: { createdAt: "asc" }, select } },
+    select: {
+      ...SELECT,
+      _count: { select: { reports: true } },
+      replies: {
+        where: { deletedAt: null },
+        orderBy: { createdAt: "asc" },
+        select: { ...SELECT, _count: { select: { reports: true } } },
+      },
+    },
   });
 
   return tops.map((t) =>
-    toDTO(t, userId, canModerate, t.replies.map((r) => toDTO(r, userId, canModerate))),
+    toDTO(t, userId, canModerate, opts, t.replies.map((r) => toDTO(r, userId, canModerate, opts))),
   );
 }
 
-/** Cria uma contribuição (ação explícita na camada do espaço). */
+/** Camada da comunidade: contribuições PÚBLICAS de qualquer espaço, por livro+página. */
+export async function getPublicPageContributions(
+  bookId: string,
+  userId: string,
+  page: number,
+): Promise<ContributionDTO[]> {
+  const tops = await prisma.contribution.findMany({
+    where: { bookId, page, parentId: null, visibility: "PUBLIC", deletedAt: null },
+    orderBy: { createdAt: "asc" },
+    select: {
+      ...SELECT,
+      space: { select: { name: true } },
+      replies: {
+        where: { deletedAt: null, visibility: "PUBLIC" },
+        orderBy: { createdAt: "asc" },
+        select: { ...SELECT, space: { select: { name: true } } },
+      },
+    },
+  });
+  const opts = { withSpaceName: true };
+  return tops.map((t) =>
+    toDTO(t, userId, false, opts, t.replies.map((r) => toDTO(r, userId, false, opts))),
+  );
+}
+
+/** Cria uma contribuição (ação explícita na camada do espaço). Nasce SPACE. */
 export async function createContribution(
   userId: string,
   input: { spaceId: string; kind: ContributionKind; page: number; quotedText?: string; contentText: string; parentId?: string },
@@ -99,22 +145,48 @@ export async function createContribution(
       content: { type: "doc", content: [{ type: "paragraph", content: text ? [{ type: "text", text }] : [] }] },
       contentText: text,
     },
-    select: {
-      id: true, kind: true, page: true, quotedText: true, contentText: true,
-      authorId: true, createdAt: true, author: { select: { id: true, name: true } },
-    },
+    select: SELECT,
   });
   return toDTO(created, userId, canManage(member.role as SpaceRole));
 }
 
-/** Remove uma contribuição (autor ou moderador). Cascata apaga respostas. */
-export async function deleteContribution(userId: string, spaceId: string, id: string): Promise<boolean> {
-  const [c, member] = await Promise.all([
-    prisma.contribution.findFirst({ where: { id, spaceId }, select: { authorId: true } }),
-    prisma.spaceMember.findUnique({ where: { spaceId_userId: { spaceId, userId } }, select: { role: true } }),
-  ]);
-  if (!c || !member) return false;
-  if (c.authorId !== userId && !canManage(member.role as SpaceRole)) return false;
+/** Alterna a visibilidade (SPACE/PUBLIC) — só o autor. Nunca escala sozinha. */
+export async function setVisibility(
+  userId: string,
+  id: string,
+  visibility: "SPACE" | "PUBLIC",
+): Promise<boolean> {
+  const c = await prisma.contribution.findUnique({ where: { id }, select: { authorId: true } });
+  if (!c || c.authorId !== userId) return false;
+  await prisma.contribution.update({ where: { id }, data: { visibility } });
+  return true;
+}
+
+/** Denuncia uma contribuição (moderação). Idempotente por usuário. */
+export async function reportContribution(userId: string, id: string, reason?: string): Promise<boolean> {
+  const c = await prisma.contribution.findUnique({ where: { id }, select: { id: true } });
+  if (!c) return false;
+  await prisma.contributionReport.upsert({
+    where: { contributionId_reporterId: { contributionId: id, reporterId: userId } },
+    update: { reason: reason ?? null },
+    create: { contributionId: id, reporterId: userId, reason: reason ?? null },
+  });
+  return true;
+}
+
+/** Remove uma contribuição (autor ou moderador do espaço dela). Cascata nas respostas. */
+export async function deleteContribution(userId: string, id: string): Promise<boolean> {
+  const c = await prisma.contribution.findUnique({ where: { id }, select: { authorId: true, spaceId: true } });
+  if (!c) return false;
+  if (c.authorId === userId) {
+    await prisma.contribution.delete({ where: { id } });
+    return true;
+  }
+  const member = await prisma.spaceMember.findUnique({
+    where: { spaceId_userId: { spaceId: c.spaceId, userId } },
+    select: { role: true },
+  });
+  if (!member || !canManage(member.role as SpaceRole)) return false;
   await prisma.contribution.delete({ where: { id } });
   return true;
 }

@@ -3,15 +3,20 @@ import { Users } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Sidebar } from "@/components/sidebar";
 import { CreateSpace } from "@/components/create-space";
+import { JoinPublicSpace } from "@/components/join-public-space";
 import { currentUser } from "@/lib/study";
-import { getMySpaces, myBooksForPicker } from "@/lib/spaces";
+import { getMySpaces, getPublicSpaces, myBooksForPicker } from "@/lib/spaces";
 import { ROLE_LABEL } from "@/lib/space-shared";
 
 export const dynamic = "force-dynamic";
 
 export default async function EspacosPage() {
   const user = await currentUser();
-  const [spaces, books] = await Promise.all([getMySpaces(user.id), myBooksForPicker(user.id)]);
+  const [spaces, books, publicSpaces] = await Promise.all([
+    getMySpaces(user.id),
+    myBooksForPicker(user.id),
+    getPublicSpaces(user.id),
+  ]);
 
   return (
     <div className="min-h-dvh">
@@ -72,6 +77,34 @@ export default async function EspacosPage() {
                 </li>
               ))}
             </ul>
+          )}
+
+          {publicSpaces.length > 0 && (
+            <section className="mt-12">
+              <h2 className="text-sm font-medium uppercase tracking-wide text-[var(--color-ink-soft)]">Descobrir espaços públicos</h2>
+              <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {publicSpaces.map((s) => (
+                  <li key={s.id} className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-[var(--color-line)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-calm)]">
+                    <div className="flex items-start gap-3">
+                      {s.bookCover ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={s.bookCover} alt="" className="h-16 w-12 shrink-0 rounded object-cover" />
+                      ) : (
+                        <span className="grid h-16 w-12 shrink-0 place-items-center rounded bg-[var(--color-line)] text-[var(--color-ink-soft)]">
+                          <Users className="size-5" />
+                        </span>
+                      )}
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{s.name}</p>
+                        <p className="truncate text-xs text-[var(--color-ink-soft)]">{s.bookTitle}</p>
+                        <p className="mt-1 text-xs text-[var(--color-ink-soft)]">{s.memberCount} {s.memberCount === 1 ? "membro" : "membros"}</p>
+                      </div>
+                    </div>
+                    <JoinPublicSpace spaceId={s.id} />
+                  </li>
+                ))}
+              </ul>
+            </section>
           )}
         </main>
       </div>

@@ -119,6 +119,50 @@ export async function getSpaceDetail(spaceId: string, userId: string): Promise<S
   };
 }
 
+/** Espaços PÚBLICOS de que o usuário ainda não participa (descoberta). */
+export async function getPublicSpaces(userId: string): Promise<SpaceListItem[]> {
+  const spaces = await prisma.studySpace.findMany({
+    where: { visibility: "PUBLIC", members: { none: { userId } } },
+    include: { book: { select: { title: true, coverUrl: true } }, _count: { select: { members: true } } },
+    orderBy: { createdAt: "desc" },
+    take: 30,
+  });
+  return spaces.map((s) => ({
+    id: s.id,
+    name: s.name,
+    bookTitle: s.book.title,
+    bookCover: s.book.coverUrl,
+    memberCount: s._count.members,
+    myRole: "VIEWER" as SpaceRole,
+  }));
+}
+
+/** Torna o espaço público/privado — só o dono. Não altera visibilidade de conteúdo. */
+export async function setSpaceVisibility(
+  spaceId: string,
+  userId: string,
+  visibility: "PRIVATE" | "PUBLIC",
+): Promise<boolean> {
+  const s = await prisma.studySpace.findUnique({ where: { id: spaceId }, select: { ownerId: true } });
+  if (!s || s.ownerId !== userId) return false;
+  await prisma.studySpace.update({ where: { id: spaceId }, data: { visibility } });
+  return true;
+}
+
+/** Entra num espaço PÚBLICO sem convite (ganha acesso ao livro). */
+export async function joinPublicSpace(userId: string, spaceId: string): Promise<boolean> {
+  const space = await prisma.studySpace.findUnique({
+    where: { id: spaceId },
+    select: { visibility: true, bookId: true },
+  });
+  if (!space || space.visibility !== "PUBLIC") return false;
+  const already = await prisma.spaceMember.findUnique({ where: { spaceId_userId: { spaceId, userId } } });
+  if (!already) await prisma.spaceMember.create({ data: { spaceId, userId, role: "MEMBER" } });
+  const hasBook = await prisma.userBook.findFirst({ where: { userId, bookId: space.bookId }, select: { id: true } });
+  if (!hasBook) await prisma.userBook.create({ data: { userId, bookId: space.bookId, status: "READING" } });
+  return true;
+}
+
 /** Prévia de um convite (p/ a tela de entrar). null se inválido/expirado. */
 export async function getInvitePreview(code: string) {
   const invite = await prisma.spaceInvite.findUnique({
