@@ -2,7 +2,16 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Minus, Plus, Maximize2, Minimize2 } from "lucide-react";
+import {
+  Minus,
+  Plus,
+  Maximize2,
+  Minimize2,
+  ChevronLeft,
+  ChevronRight,
+  BookOpen,
+  AlignJustify,
+} from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LoadingMark } from "@/components/logo";
 import type { ReaderData } from "@/lib/reader";
@@ -152,22 +161,38 @@ export function MobiReader({ data }: { data: ReaderData }) {
   const [error, setError] = useState<string | null>(null);
   const [fontScale, setFontScale] = useState(1);
   const [fullscreen, setFullscreen] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const blobsRef = useRef<string[]>([]);
+  // modo de leitura: paginado (estilo livro) ou rolagem contínua.
+  const [paged, setPaged] = useState(true);
+  const [page, setPage] = useState(0);
+  const [pageCount, setPageCount] = useState(1);
+  const [dims, setDims] = useState({ w: 0, h: 0 });
 
+  const scrollRef = useRef<HTMLDivElement>(null); // container (stage no modo página)
+  const articleRef = useRef<HTMLElement>(null);
+  const blobsRef = useRef<string[]>([]);
+  const restoredRef = useRef(false);
+
+  // geometria da página (colunas do tamanho da tela, centradas com margem)
+  const readW = Math.min(680, Math.max(280, dims.w - 48));
+  const gap = Math.max(0, dims.w - readW);
+  const step = readW + gap; // = largura da tela
+
+  // preferências
   useEffect(() => {
     try {
       const raw = localStorage.getItem("mobi:prefs");
       if (raw) {
-        const p = JSON.parse(raw) as { fontScale?: number };
+        const p = JSON.parse(raw) as { fontScale?: number; paged?: boolean };
         if (typeof p.fontScale === "number") setFontScale(Math.min(1.6, Math.max(0.8, p.fontScale)));
+        if (typeof p.paged === "boolean") setPaged(p.paged);
       }
     } catch { /* ignora */ }
   }, []);
   useEffect(() => {
-    try { localStorage.setItem("mobi:prefs", JSON.stringify({ fontScale })); } catch { /* ignora */ }
-  }, [fontScale]);
+    try { localStorage.setItem("mobi:prefs", JSON.stringify({ fontScale, paged })); } catch { /* ignora */ }
+  }, [fontScale, paged]);
 
+  // carrega + parseia
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -180,11 +205,6 @@ export function MobiReader({ data }: { data: ReaderData }) {
         blobsRef.current = parsed.blobs;
         setHtml(parsed.html);
         setLoading(false);
-        // restaura posição de leitura (fração salva em progress)
-        requestAnimationFrame(() => {
-          const el = scrollRef.current;
-          if (el && data.progress > 0) el.scrollTop = data.progress * (el.scrollHeight - el.clientHeight);
-        });
       } catch (e) {
         if (cancelled) return;
         setError(e instanceof Error ? e.message : "Não foi possível abrir o MOBI.");
@@ -192,17 +212,47 @@ export function MobiReader({ data }: { data: ReaderData }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [data.fileUrl, data.progress]);
+  }, [data.fileUrl]);
 
   useEffect(() => () => { for (const url of blobsRef.current) URL.revokeObjectURL(url); }, []);
 
-  // salva o progresso (fração de rolagem), debounced
-  const onScroll = useCallback(() => {
+  // mede o palco (recalcula páginas ao redimensionar / modo foco / painel)
+  useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const frac = el.scrollHeight > el.clientHeight ? el.scrollTop / (el.scrollHeight - el.clientHeight) : 0;
-    clearTimeout((onScroll as unknown as { t?: ReturnType<typeof setTimeout> }).t);
-    (onScroll as unknown as { t?: ReturnType<typeof setTimeout> }).t = setTimeout(() => {
+    const ro = new ResizeObserver(() => setDims({ w: el.clientWidth, h: el.clientHeight }));
+    ro.observe(el);
+    setDims({ w: el.clientWidth, h: el.clientHeight });
+    return () => ro.disconnect();
+  }, [loading]);
+
+  // recalcula o total de páginas quando o conteúdo/geometria/fonte mudam
+  useEffect(() => {
+    if (!paged || loading || !articleRef.current || step < 1) return;
+    const sw = articleRef.current.scrollWidth;
+    const count = Math.max(1, Math.round((sw + gap) / step));
+    setPageCount(count);
+    if (!restoredRef.current) {
+      restoredRef.current = true;
+      if (data.progress > 0) setPage(Math.round(data.progress * (count - 1)));
+    } else {
+      setPage((p) => Math.min(p, count - 1));
+    }
+  }, [paged, loading, html, dims.w, dims.h, fontScale, step, gap, data.progress]);
+
+  // restaura a rolagem ao voltar pro modo contínuo
+  useEffect(() => {
+    if (paged || loading) return;
+    const el = scrollRef.current;
+    if (el && data.progress > 0) el.scrollTop = data.progress * (el.scrollHeight - el.clientHeight);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paged, loading]);
+
+  // salva progresso — por página (paginado) ou por rolagem (contínuo), debounced
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveProgress = useCallback((frac: number) => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
       void fetch(`/api/userbooks/${data.userBookId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -210,6 +260,32 @@ export function MobiReader({ data }: { data: ReaderData }) {
       }).catch(() => {});
     }, 900);
   }, [data.userBookId]);
+
+  useEffect(() => {
+    if (paged && pageCount > 1) saveProgress(page / (pageCount - 1));
+  }, [page, pageCount, paged, saveProgress]);
+
+  const onScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el || paged) return;
+    const frac = el.scrollHeight > el.clientHeight ? el.scrollTop / (el.scrollHeight - el.clientHeight) : 0;
+    saveProgress(frac);
+  }, [paged, saveProgress]);
+
+  const turn = useCallback((d: number) => setPage((p) => Math.min(pageCount - 1, Math.max(0, p + d))), [pageCount]);
+
+  // teclado: ← → viram página no modo paginado
+  useEffect(() => {
+    if (!paged) return;
+    function onKey(e: KeyboardEvent) {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (e.key === "ArrowRight") turn(1);
+      else if (e.key === "ArrowLeft") turn(-1);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [paged, turn]);
 
   async function toggleFullscreen() {
     if (!document.fullscreenElement) await document.documentElement.requestFullscreen().catch(() => {});
@@ -221,6 +297,22 @@ export function MobiReader({ data }: { data: ReaderData }) {
     return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
 
+  const articleStyle: React.CSSProperties = paged
+    ? {
+        position: "absolute",
+        top: 0,
+        left: gap / 2,
+        width: readW,
+        height: dims.h || "100%",
+        columnWidth: readW,
+        columnGap: gap,
+        columnFill: "auto",
+        transform: `translateX(${-page * step}px)`,
+        transition: "transform .3s ease",
+        fontSize: `${fontScale}rem`,
+      }
+    : { fontSize: `${fontScale}rem` };
+
   return (
     <div className="flex h-dvh flex-col bg-[var(--color-paper)]">
       <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-[var(--color-line)] bg-[var(--color-paper)]/80 px-4 backdrop-blur-xl">
@@ -230,6 +322,9 @@ export function MobiReader({ data }: { data: ReaderData }) {
           <span className="truncate font-medium">{data.title}</span>
         </nav>
         <div className="flex shrink-0 items-center gap-1">
+          <button onClick={() => setPaged((v) => !v)} className="grid size-8 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60" title={paged ? "Modo rolagem" : "Modo página"} aria-label={paged ? "Modo rolagem" : "Modo página"}>
+            {paged ? <AlignJustify className="size-4" /> : <BookOpen className="size-4" />}
+          </button>
           <button onClick={() => setFontScale((s) => Math.max(0.8, +(s - 0.1).toFixed(2)))} className="grid size-8 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60" title="Diminuir texto" aria-label="Diminuir texto"><Minus className="size-4" /></button>
           <button onClick={() => setFontScale((s) => Math.min(1.6, +(s + 0.1).toFixed(2)))} className="grid size-8 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60" title="Aumentar texto" aria-label="Aumentar texto"><Plus className="size-4" /></button>
           <ThemeToggle />
@@ -237,7 +332,11 @@ export function MobiReader({ data }: { data: ReaderData }) {
         </div>
       </header>
 
-      <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto">
+      <div
+        ref={scrollRef}
+        onScroll={onScroll}
+        className={paged ? "relative flex-1 overflow-hidden" : "flex-1 overflow-y-auto"}
+      >
         {loading ? (
           <LoadingMark label="Abrindo documento…" className="mt-24" />
         ) : error ? (
@@ -247,12 +346,21 @@ export function MobiReader({ data }: { data: ReaderData }) {
           </div>
         ) : (
           <article
-            className="book-prose mx-auto max-w-2xl px-6 py-10"
-            style={{ fontSize: `${fontScale}rem` }}
+            ref={articleRef}
+            className={paged ? "book-prose book-paged" : "book-prose mx-auto max-w-2xl px-6 py-10"}
+            style={articleStyle}
             dangerouslySetInnerHTML={{ __html: html }}
           />
         )}
       </div>
+
+      {paged && !loading && !error && (
+        <footer className="flex h-12 shrink-0 items-center justify-center gap-6 border-t border-[var(--color-line)] bg-[var(--color-paper)]/80 px-4 text-sm backdrop-blur-xl">
+          <button onClick={() => turn(-1)} disabled={page <= 0} className="grid size-8 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60 disabled:opacity-30" aria-label="Página anterior"><ChevronLeft className="size-4" /></button>
+          <span className="min-w-20 text-center tabular-nums text-[var(--color-ink-soft)]">{page + 1} / {pageCount}</span>
+          <button onClick={() => turn(1)} disabled={page >= pageCount - 1} className="grid size-8 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60 disabled:opacity-30" aria-label="Próxima página"><ChevronRight className="size-4" /></button>
+        </footer>
+      )}
 
       <style>{`
         .book-prose{color:var(--color-ink);line-height:1.7;font-family:Georgia,'Times New Roman',serif}
@@ -266,6 +374,9 @@ export function MobiReader({ data }: { data: ReaderData }) {
         .book-prose ol{margin:0 0 1em;padding-left:1.5em;list-style:decimal}
         .book-prose li{margin:.25em 0;display:list-item}
         .book-prose hr{border:none;border-top:1px solid var(--color-line);margin:2em 0}
+        /* modo página: imagens não podem estourar a altura da coluna */
+        .book-paged img{max-height:100%;object-fit:contain}
+        .book-paged h1,.book-paged h2,.book-paged h3{break-inside:avoid}
       `}</style>
     </div>
   );
