@@ -137,7 +137,16 @@ export function PdfReader({ data }: { data: ReaderData }) {
           "pdfjs-dist/build/pdf.worker.min.mjs",
           import.meta.url,
         ).toString();
-        const loaded = (await pdfjs.getDocument({ url: data.fileUrl }).promise) as unknown as PdfDoc;
+        // Carrega só os bytes necessários via HTTP Range: disableStream evita o
+        // download sequencial do arquivo inteiro e disableAutoFetch evita o
+        // pré-fetch do resto — a página 1 renderiza após buscar só o xref + seus
+        // objetos, em vez de baixar/parsear as 134 páginas de uma vez.
+        const loaded = (await pdfjs.getDocument({
+          url: data.fileUrl,
+          disableAutoFetch: true,
+          disableStream: true,
+          rangeChunkSize: 262144,
+        }).promise) as unknown as PdfDoc;
         if (cancelled) return;
         setDoc(loaded);
         setNumPages(loaded.numPages);

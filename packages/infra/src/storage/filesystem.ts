@@ -1,4 +1,5 @@
-import { mkdir, readFile, writeFile, rm } from "node:fs/promises";
+import { mkdir, readFile, writeFile, rm, stat } from "node:fs/promises";
+import { createReadStream, type ReadStream } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import type { StorageProvider } from "@calmstudy/core";
 
@@ -29,6 +30,16 @@ export class FilesystemStorage implements StorageProvider {
 
   async get(key: string): Promise<Buffer> {
     return readFile(this.path(key));
+  }
+
+  /** Tamanho do arquivo (bytes) — para respostas com Range/Content-Length. */
+  async size(key: string): Promise<number> {
+    return (await stat(this.path(key))).size;
+  }
+
+  /** Stream de leitura (fatia opcional) — evita carregar o arquivo inteiro na memória. */
+  readStream(key: string, range?: { start: number; end: number }): ReadStream {
+    return createReadStream(this.path(key), range);
   }
 
   async delete(key: string): Promise<void> {
