@@ -74,6 +74,9 @@ importers:
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
+      fflate:
+        specifier: ^0.8.3
+        version: 0.8.3
       framer-motion:
         specifier: ^11.15.0
         version: 11.18.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)

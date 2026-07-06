@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { PdfReader } from "@/components/pdf-reader";
+import { EpubReader } from "@/components/epub-reader";
 import { getReaderData } from "@/lib/reader";
 
 export const dynamic = "force-dynamic";
@@ -20,14 +21,17 @@ export default async function ReadPage({
   const jump = page ? parseInt(page, 10) : NaN;
   if (Number.isFinite(jump) && jump > 0) data.lastPage = jump;
 
-  // Fase 1: leitor de PDF. EPUB/CBZ ganham seus leitores na Fase 4.
+  if (data.format === "EPUB") return <EpubReader data={data} />;
+
+  // PDF tem o leitor completo; EPUB tem o leitor de leitura (acima).
+  // CBZ/MOBI e afins ganham seus leitores depois.
   if (data.format !== "PDF") {
     return (
       <div className="grid min-h-dvh place-items-center px-6 text-center">
         <div>
           <p className="font-serif text-xl">Leitor de {data.format} em breve</p>
           <p className="mt-2 text-sm text-[var(--color-ink-soft)]">
-            Por enquanto o CalmStudy abre PDFs. Volte para a{" "}
+            Por enquanto o CalmStudy abre PDF e EPUB. Volte para a{" "}
             <a href="/" className="text-[var(--color-accent)] underline">
               biblioteca
             </a>
