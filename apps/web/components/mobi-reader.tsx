@@ -11,9 +11,13 @@ import {
   ChevronRight,
   BookOpen,
   AlignJustify,
+  Notebook,
+  PanelRight,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LoadingMark } from "@/components/logo";
+import { StudySessionTracker } from "@/components/study-session-tracker";
+import { ReaderStudyPanel } from "@/components/reader-study-panel";
 import type { ReaderData } from "@/lib/reader";
 
 // ───────────────────────── Parser MOBI (Mobi6 / PalmDOC) ─────────────────────────
@@ -166,6 +170,7 @@ export function MobiReader({ data }: { data: ReaderData }) {
   const [page, setPage] = useState(0);
   const [pageCount, setPageCount] = useState(1);
   const [dims, setDims] = useState({ w: 0, h: 0 });
+  const [panelOpen, setPanelOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null); // container (stage no modo página)
   const articleRef = useRef<HTMLElement>(null);
@@ -315,6 +320,7 @@ export function MobiReader({ data }: { data: ReaderData }) {
 
   return (
     <div className="flex h-dvh flex-col bg-[var(--color-paper)]">
+      <StudySessionTracker userBookId={data.userBookId} page={paged ? page + 1 : 1} />
       <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-[var(--color-line)] bg-[var(--color-paper)]/80 px-4 backdrop-blur-xl">
         <nav className="flex min-w-0 flex-1 items-center gap-2 text-sm">
           <Link href="/" className="shrink-0 text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]">Biblioteca</Link>
@@ -328,28 +334,42 @@ export function MobiReader({ data }: { data: ReaderData }) {
           <button onClick={() => setFontScale((s) => Math.max(0.8, +(s - 0.1).toFixed(2)))} className="grid size-8 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60" title="Diminuir texto" aria-label="Diminuir texto"><Minus className="size-4" /></button>
           <button onClick={() => setFontScale((s) => Math.min(1.6, +(s + 0.1).toFixed(2)))} className="grid size-8 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60" title="Aumentar texto" aria-label="Aumentar texto"><Plus className="size-4" /></button>
           <ThemeToggle />
+          <Link href={`/caderno/${data.userBookId}`} className="grid size-8 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60" title="Caderno do livro" aria-label="Caderno do livro"><Notebook className="size-4" /></Link>
           <button onClick={toggleFullscreen} className="grid size-8 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60" title={fullscreen ? "Sair da tela cheia" : "Tela cheia"} aria-label={fullscreen ? "Sair da tela cheia" : "Tela cheia"}>{fullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}</button>
+          <button onClick={() => setPanelOpen((v) => !v)} className={["grid size-8 place-items-center rounded-full transition-colors hover:bg-[var(--color-line)]/60", panelOpen ? "bg-[var(--color-accent-soft)] text-[var(--color-ink)]" : "text-[var(--color-ink-soft)]"].join(" ")} title="Bancada de estudo" aria-label="Bancada de estudo"><PanelRight className="size-4" /></button>
         </div>
       </header>
 
-      <div
-        ref={scrollRef}
-        onScroll={onScroll}
-        className={paged ? "relative flex-1 overflow-hidden" : "flex-1 overflow-y-auto"}
-      >
-        {loading ? (
-          <LoadingMark label="Abrindo documento…" className="mt-24" />
-        ) : error ? (
-          <div className="mx-auto mt-24 max-w-md px-6 text-center">
-            <p className="font-serif text-lg">Não foi possível abrir este MOBI</p>
-            <p className="mt-2 text-sm text-[var(--color-ink-soft)]">{error}</p>
-          </div>
-        ) : (
-          <article
-            ref={articleRef}
-            className={paged ? "book-prose book-paged" : "book-prose mx-auto max-w-2xl px-6 py-10"}
-            style={articleStyle}
-            dangerouslySetInnerHTML={{ __html: html }}
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
+        <div
+          ref={scrollRef}
+          onScroll={onScroll}
+          className={paged ? "relative flex-1 overflow-hidden" : "flex-1 overflow-y-auto"}
+        >
+          {loading ? (
+            <LoadingMark label="Abrindo documento…" className="mt-24" />
+          ) : error ? (
+            <div className="mx-auto mt-24 max-w-md px-6 text-center">
+              <p className="font-serif text-lg">Não foi possível abrir este MOBI</p>
+              <p className="mt-2 text-sm text-[var(--color-ink-soft)]">{error}</p>
+            </div>
+          ) : (
+            <article
+              ref={articleRef}
+              className={paged ? "book-prose book-paged" : "book-prose mx-auto max-w-2xl px-6 py-10"}
+              style={articleStyle}
+              dangerouslySetInnerHTML={{ __html: html }}
+            />
+          )}
+        </div>
+
+        {panelOpen && !loading && !error && (
+          <ReaderStudyPanel
+            userBookId={data.userBookId}
+            concepts={data.concepts}
+            page={paged ? page + 1 : undefined}
+            locationLabel={paged ? `Pág. ${page + 1}` : undefined}
+            onClose={() => setPanelOpen(false)}
           />
         )}
       </div>

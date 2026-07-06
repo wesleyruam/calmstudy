@@ -11,10 +11,14 @@ import {
   Plus,
   Maximize2,
   Minimize2,
+  Notebook,
+  PanelRight,
   X,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LoadingMark } from "@/components/logo";
+import { StudySessionTracker } from "@/components/study-session-tracker";
+import { ReaderStudyPanel } from "@/components/reader-study-panel";
 import type { ReaderData } from "@/lib/reader";
 
 // ─────────────────────────── Parsing do EPUB (cliente) ───────────────────────────
@@ -235,6 +239,7 @@ export function EpubReader({ data }: { data: ReaderData }) {
   const [error, setError] = useState<string | null>(null);
   const [fontScale, setFontScale] = useState(1);
   const [tocOpen, setTocOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -358,6 +363,7 @@ export function EpubReader({ data }: { data: ReaderData }) {
 
   return (
     <div className="flex h-dvh flex-col bg-[var(--color-paper)]">
+      <StudySessionTracker userBookId={data.userBookId} page={idx + 1} />
       <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-[var(--color-line)] bg-[var(--color-paper)]/80 px-4 backdrop-blur-xl">
         <nav className="flex min-w-0 flex-1 items-center gap-2 text-sm">
           <Link href="/" className="shrink-0 text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]">
@@ -385,6 +391,14 @@ export function EpubReader({ data }: { data: ReaderData }) {
             <Plus className="size-4" />
           </button>
           <ThemeToggle />
+          <Link
+            href={`/caderno/${data.userBookId}`}
+            className="grid size-8 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60"
+            title="Caderno do livro"
+            aria-label="Caderno do livro"
+          >
+            <Notebook className="size-4" />
+          </Link>
           <button
             onClick={toggleFullscreen}
             className="grid size-8 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60"
@@ -392,6 +406,17 @@ export function EpubReader({ data }: { data: ReaderData }) {
             aria-label={fullscreen ? "Sair da tela cheia" : "Tela cheia"}
           >
             {fullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </button>
+          <button
+            onClick={() => setPanelOpen((v) => !v)}
+            className={[
+              "grid size-8 place-items-center rounded-full transition-colors hover:bg-[var(--color-line)]/60",
+              panelOpen ? "bg-[var(--color-accent-soft)] text-[var(--color-ink)]" : "text-[var(--color-ink-soft)]",
+            ].join(" ")}
+            title="Bancada de estudo"
+            aria-label="Bancada de estudo"
+          >
+            <PanelRight className="size-4" />
           </button>
           <button
             onClick={() => setTocOpen((v) => !v)}
@@ -460,6 +485,16 @@ export function EpubReader({ data }: { data: ReaderData }) {
               ))}
             </ul>
           </aside>
+        )}
+
+        {panelOpen && !loading && !error && (
+          <ReaderStudyPanel
+            userBookId={data.userBookId}
+            concepts={data.concepts}
+            page={idx + 1}
+            locationLabel={chapterTitle || `Cap. ${idx + 1}`}
+            onClose={() => setPanelOpen(false)}
+          />
         )}
       </div>
 
