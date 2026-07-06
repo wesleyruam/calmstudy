@@ -368,31 +368,6 @@ export function PdfReader({ data }: { data: ReaderData }) {
           </nav>
         </div>
 
-        {/* navegação central de página */}
-        {mode === "single" && (
-          <div className="flex shrink-0 items-center gap-1 rounded-full border border-[var(--color-line)] px-1 py-0.5 text-sm">
-            <button
-              onClick={() => go(-1)}
-              disabled={page <= 1}
-              className="grid size-7 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60 disabled:opacity-30"
-              aria-label="Página anterior"
-            >
-              <ChevronLeft className="size-4" />
-            </button>
-            <span className="px-1 tabular-nums text-[var(--color-ink-soft)]">
-              <span className="font-medium text-[var(--color-ink)]">{page}</span> de {numPages || "…"}
-            </span>
-            <button
-              onClick={() => go(1)}
-              disabled={!!numPages && page >= numPages}
-              className="grid size-7 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60 disabled:opacity-30"
-              aria-label="Próxima página"
-            >
-              <ChevronRight className="size-4" />
-            </button>
-          </div>
-        )}
-
         <div className="flex flex-1 items-center justify-end gap-1">
           {showLayers && (
             <div className="mr-1">
@@ -605,9 +580,7 @@ export function PdfReader({ data }: { data: ReaderData }) {
           <NavBtn onClick={() => go(-1)} disabled={page <= 1}>
             <ChevronLeft className="size-4" /> Anterior
           </NavBtn>
-          <span className="min-w-28 text-center text-sm tabular-nums text-[var(--color-ink-soft)]">
-            Página {page} / {numPages || "…"}
-          </span>
+          <PageJump page={page} numPages={numPages} onJump={jumpTo} />
           <NavBtn onClick={() => go(1)} disabled={!!numPages && page >= numPages}>
             Próxima <ChevronRight className="size-4" />
           </NavBtn>
@@ -682,6 +655,59 @@ function NavBtn({
       className="inline-flex items-center gap-1 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm transition-colors hover:bg-[var(--color-line)]/40 disabled:cursor-not-allowed disabled:opacity-40"
     >
       {children}
+    </button>
+  );
+}
+
+// Indicador de página que vira campo de "ir para" ao clicar.
+function PageJump({
+  page,
+  numPages,
+  onJump,
+}: {
+  page: number;
+  numPages: number;
+  onJump: (p: number) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState("");
+
+  function commit() {
+    const p = Number(value);
+    if (Number.isInteger(p) && p >= 1) onJump(p);
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        type="number"
+        min={1}
+        max={numPages || undefined}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") setEditing(false);
+        }}
+        aria-label="Ir para a página"
+        className="w-28 rounded-full border border-[var(--color-accent)] bg-transparent px-3 py-1 text-center text-sm tabular-nums outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+      />
+    );
+  }
+
+  return (
+    <button
+      onClick={() => {
+        setValue(String(page));
+        setEditing(true);
+      }}
+      title="Ir para a página…"
+      className="min-w-28 rounded-full px-3 py-1 text-center text-sm tabular-nums text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/40"
+    >
+      Página {page} / {numPages || "…"}
     </button>
   );
 }

@@ -148,8 +148,14 @@ export function ReaderPagePanel({
         )}
 
         {(tab === "content" || tab === "notes") && (
-          <Section title="Anotações" icon={MessageSquare}>
-            <NoteComposer kind="NOTE" placeholder="Escreva uma anotação sobre esta página…" onCreate={onCreateNote} />
+          <Section
+            title="Anotações"
+            icon={MessageSquare}
+            action={tab === "content" ? { label: "Adicionar", onClick: () => onTab("notes") } : undefined}
+          >
+            {tab === "notes" && (
+              <NoteComposer kind="NOTE" placeholder="Escreva uma anotação sobre esta página…" onCreate={onCreateNote} />
+            )}
             {pageNotes.length === 0 ? (
               <Empty>Nenhuma anotação nesta página ainda.</Empty>
             ) : (
@@ -159,8 +165,14 @@ export function ReaderPagePanel({
         )}
 
         {(tab === "content" || tab === "questions") && (
-          <Section title="Perguntas" icon={CircleHelp}>
-            <NoteComposer kind="QUESTION" placeholder="O que ficou em aberto nesta página?" onCreate={onCreateNote} />
+          <Section
+            title="Perguntas"
+            icon={CircleHelp}
+            action={tab === "content" ? { label: "Adicionar", onClick: () => onTab("questions") } : undefined}
+          >
+            {tab === "questions" && (
+              <NoteComposer kind="QUESTION" placeholder="O que ficou em aberto nesta página?" onCreate={onCreateNote} />
+            )}
             {questions.length === 0 ? (
               <Empty>Nenhuma pergunta nesta página ainda.</Empty>
             ) : (
@@ -170,8 +182,12 @@ export function ReaderPagePanel({
         )}
 
         {(tab === "content" || tab === "links") && (
-          <Section title="Links" icon={Link2}>
-            <LinkComposer page={page} numPages={numPages} onCreate={onCreateLink} />
+          <Section
+            title="Links"
+            icon={Link2}
+            action={tab === "content" ? { label: "Adicionar", onClick: () => onTab("links") } : undefined}
+          >
+            {tab === "links" && <LinkComposer page={page} numPages={numPages} onCreate={onCreateLink} />}
             {links.length === 0 ? (
               <Empty>Nenhum link partindo desta página ainda.</Empty>
             ) : (
@@ -274,18 +290,30 @@ function LinkComposer({
 function Section({
   title,
   icon: Icon,
+  action,
   children,
 }: {
   title: string;
   icon: React.ComponentType<{ className?: string }>;
+  action?: { label: string; onClick: () => void };
   children: React.ReactNode;
 }) {
   return (
     <section className="space-y-2">
-      <h3 className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-[var(--color-ink-soft)]">
-        <Icon className="size-3.5" />
-        {title}
-      </h3>
+      <div className="flex items-center justify-between">
+        <h3 className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-[var(--color-ink-soft)]">
+          <Icon className="size-3.5" />
+          {title}
+        </h3>
+        {action && (
+          <button
+            onClick={action.onClick}
+            className="inline-flex items-center gap-0.5 text-[11px] text-[var(--color-ink-soft)] transition-colors hover:text-[var(--color-accent)]"
+          >
+            <Plus className="size-3" /> {action.label}
+          </button>
+        )}
+      </div>
       {children}
     </section>
   );
