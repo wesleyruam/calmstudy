@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { PdfReader } from "@/components/pdf-reader";
 import { EpubReader } from "@/components/epub-reader";
+import { MobiReader } from "@/components/mobi-reader";
 import { getReaderData } from "@/lib/reader";
 
 export const dynamic = "force-dynamic";
@@ -22,9 +23,10 @@ export default async function ReadPage({
   if (Number.isFinite(jump) && jump > 0) data.lastPage = jump;
 
   if (data.format === "EPUB") return <EpubReader data={data} />;
+  if (data.format === "MOBI") return <MobiReader data={data} />;
 
-  // PDF tem o leitor completo; EPUB tem o leitor de leitura (acima).
-  // CBZ/MOBI e afins ganham seus leitores depois.
+  // PDF tem o leitor completo; EPUB/MOBI têm o leitor de leitura.
+  // CBZ e afins ganham seus leitores depois.
   if (data.format !== "PDF") {
     return (
       <div className="grid min-h-dvh place-items-center px-6 text-center">

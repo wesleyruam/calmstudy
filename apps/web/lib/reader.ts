@@ -12,6 +12,7 @@ export interface ReaderData {
   fileUrl: string;
   pages: number | null;
   lastPage: number;
+  progress: number; // fração 0–1 (usada p/ restaurar a rolagem no leitor de MOBI)
   zoom: number | null;
   viewMode: string | null;
   // visão geral (coluna esquerda da bancada de leitura)
@@ -52,6 +53,7 @@ export async function getReaderData(userBookId: string): Promise<ReaderData | nu
     fileUrl: `/api/files/${ub.book.fileKey.split("/").map(encodeURIComponent).join("/")}`,
     pages: ub.book.pages,
     lastPage: ub.lastPage,
+    progress: ub.progress,
     zoom: ub.zoom,
     viewMode: ub.viewMode,
     totalSeconds: sessionAgg._sum.seconds ?? 0,
