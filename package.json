@@ -16,7 +16,8 @@
     "db:migrate": "pnpm --filter @calmstudy/db migrate",
     "db:studio": "pnpm --filter @calmstudy/db studio",
     "infra:up": "docker compose up -d",
-    "infra:down": "docker compose down"
+    "infra:down": "docker compose down",
+    "mem": "node scripts/mem-monitor.mjs"
   },
   "devDependencies": {
     "turbo": "^2.3.3",
