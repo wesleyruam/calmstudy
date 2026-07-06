@@ -46,6 +46,8 @@ const worker = new Worker<ProcessDocumentJob>(
         title: parsed.metadata.title ?? undefined,
         author: parsed.metadata.author ?? undefined,
         language: parsed.metadata.language ?? undefined,
+        isbn: parsed.metadata.isbn ?? undefined,
+        description: parsed.metadata.description ?? undefined,
       },
     });
 
