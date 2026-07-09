@@ -18,7 +18,10 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LoadingMark } from "@/components/logo";
 import { StudySessionTracker } from "@/components/study-session-tracker";
-import { ReaderStudyPanel } from "@/components/reader-study-panel";
+import { ReaderStudyDock, HighlightMenu } from "@/components/reader-study-dock";
+import { useReflowStudy } from "@/components/use-reflow-study";
+import { applyHighlights, selectionRange, type TextAnchor } from "@/lib/reflow-highlight";
+import { highlightColor, type HighlightCategory } from "@/lib/highlight-shared";
 import type { ReaderData } from "@/lib/reader";
 
 // ─────────────────────────── Parsing do EPUB (cliente) ───────────────────────────
@@ -243,7 +246,11 @@ export function EpubReader({ data }: { data: ReaderData }) {
   const [fullscreen, setFullscreen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const articleRef = useRef<HTMLElement>(null);
   const blobsRef = useRef<string[]>([]);
+
+  const [sel, setSel] = useState<{ x: number; y: number; anchor: TextAnchor; text: string } | null>(null);
+  const study = useReflowStudy(data.userBookId);
 
   // preferências (tamanho da fonte)
   useEffect(() => {
@@ -340,14 +347,62 @@ export function EpubReader({ data }: { data: ReaderData }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [go]);
 
-  // clique em link interno → salto de capítulo
-  const onContentClick = useCallback((e: React.MouseEvent) => {
-    const a = (e.target as HTMLElement).closest("a[data-eref]");
-    if (!a) return;
-    e.preventDefault();
-    const target = Number(a.getAttribute("data-eref"));
-    if (Number.isInteger(target)) setIdx(target);
-  }, []);
+  // clique: grifo → abre no painel; link interno → salto de capítulo
+  const onContentClick = useCallback(
+    (e: React.MouseEvent) => {
+      const mark = (e.target as HTMLElement).closest("mark[data-hl-id]");
+      if (mark) {
+        const id = (mark as HTMLElement).dataset.hlId;
+        const h = study.highlights.find((x) => x.id === id);
+        if (h) {
+          study.setActiveHighlight(h);
+          setPanelOpen(true);
+        }
+        return;
+      }
+      const a = (e.target as HTMLElement).closest("a[data-eref]");
+      if (!a) return;
+      e.preventDefault();
+      const target = Number(a.getAttribute("data-eref"));
+      if (Number.isInteger(target)) setIdx(target);
+    },
+    [study],
+  );
+
+  // renderiza os grifos deste capítulo (offset → <mark>)
+  useEffect(() => {
+    if (loading || !articleRef.current) return;
+    const renderable = study.highlights
+      .map((h) => ({ id: h.id, anchor: h.anchor as unknown as TextAnchor, color: highlightColor(h) }))
+      .filter((h) => h.anchor?.kind === "text" && h.anchor.chap === idx && typeof h.anchor.start === "number")
+      .map((h) => ({ id: h.id, start: h.anchor.start, len: h.anchor.len, color: h.color }));
+    applyHighlights(articleRef.current, renderable);
+  }, [loading, html, idx, study.highlights, fontScale, panelOpen]);
+
+  // seleção de texto → menu de categorias
+  const onSelectUp = useCallback(() => {
+    const root = articleRef.current;
+    if (!root) return;
+    const r = selectionRange(root);
+    if (!r) return setSel(null);
+    setSel({
+      x: r.rect.left + r.rect.width / 2,
+      y: r.rect.top,
+      text: r.text,
+      anchor: { page: idx + 1, kind: "text", start: r.start, len: r.len, chap: idx },
+    });
+  }, [idx]);
+
+  const addHighlight = useCallback(
+    (category: HighlightCategory) => {
+      if (!sel) return;
+      void study.createHighlight(sel.text, sel.anchor, category);
+      window.getSelection()?.removeAllRanges();
+      setSel(null);
+      setPanelOpen(true);
+    },
+    [sel, study],
+  );
 
   async function toggleFullscreen() {
     if (!document.fullscreenElement) await document.documentElement.requestFullscreen().catch(() => {});
@@ -433,7 +488,7 @@ export function EpubReader({ data }: { data: ReaderData }) {
       </header>
 
       <div className="relative flex min-h-0 flex-1 overflow-hidden">
-        <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        <div ref={scrollRef} onMouseUp={onSelectUp} className="flex-1 overflow-y-auto">
           {loading ? (
             <LoadingMark label="Abrindo documento…" className="mt-24" />
           ) : error ? (
@@ -443,6 +498,7 @@ export function EpubReader({ data }: { data: ReaderData }) {
             </div>
           ) : (
             <article
+              ref={articleRef}
               className="epub-prose mx-auto max-w-2xl px-6 py-10"
               style={{ fontSize: `${fontScale}rem` }}
               onClick={onContentClick}
@@ -488,15 +544,20 @@ export function EpubReader({ data }: { data: ReaderData }) {
         )}
 
         {panelOpen && !loading && !error && (
-          <ReaderStudyPanel
-            userBookId={data.userBookId}
-            concepts={data.concepts}
+          <ReaderStudyDock
             page={idx + 1}
-            locationLabel={chapterTitle || `Cap. ${idx + 1}`}
+            numPages={total}
+            concepts={data.concepts}
+            study={study}
+            onJump={(p) => setIdx(Math.min(Math.max(0, p - 1), Math.max(0, total - 1)))}
             onClose={() => setPanelOpen(false)}
           />
         )}
       </div>
+
+      {sel && (
+        <HighlightMenu x={sel.x} y={sel.y} onPick={addHighlight} onClose={() => setSel(null)} />
+      )}
 
       <footer className="sticky bottom-0 z-10 grid h-16 grid-cols-3 items-center border-t border-[var(--color-line)] bg-[var(--color-paper)]/80 px-4 backdrop-blur-xl">
         <div />

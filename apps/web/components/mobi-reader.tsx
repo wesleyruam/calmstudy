@@ -17,7 +17,10 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LoadingMark } from "@/components/logo";
 import { StudySessionTracker } from "@/components/study-session-tracker";
-import { ReaderStudyPanel } from "@/components/reader-study-panel";
+import { ReaderStudyDock, HighlightMenu } from "@/components/reader-study-dock";
+import { useReflowStudy } from "@/components/use-reflow-study";
+import { applyHighlights, selectionRange, type TextAnchor } from "@/lib/reflow-highlight";
+import { highlightColor, type HighlightCategory } from "@/lib/highlight-shared";
 import type { ReaderData } from "@/lib/reader";
 
 // ───────────────────────── Parser MOBI (Mobi6 / PalmDOC) ─────────────────────────
@@ -171,6 +174,9 @@ export function MobiReader({ data }: { data: ReaderData }) {
   const [pageCount, setPageCount] = useState(1);
   const [dims, setDims] = useState({ w: 0, h: 0 });
   const [panelOpen, setPanelOpen] = useState(false);
+  const [sel, setSel] = useState<{ x: number; y: number; anchor: TextAnchor; text: string } | null>(null);
+
+  const study = useReflowStudy(data.userBookId);
 
   const scrollRef = useRef<HTMLDivElement>(null); // container (stage no modo página)
   const articleRef = useRef<HTMLElement>(null);
@@ -302,6 +308,60 @@ export function MobiReader({ data }: { data: ReaderData }) {
     return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
 
+  // renderiza os grifos (offset → <mark>) sempre que o texto ou a lista mudam
+  // Reaplica os grifos após o texto/lista mudarem E após a paginação/tamanho
+  // assentarem — o React recompõe o dangerouslySetInnerHTML nesses re-renders e
+  // apagaria as <mark> aplicadas imperativamente. applyHighlights é idempotente.
+  useEffect(() => {
+    if (loading || !articleRef.current) return;
+    const renderable = study.highlights
+      .map((h) => ({ id: h.id, anchor: h.anchor as unknown as TextAnchor, color: highlightColor(h) }))
+      .filter((h) => h.anchor?.kind === "text" && typeof h.anchor.start === "number")
+      .map((h) => ({ id: h.id, start: h.anchor.start, len: h.anchor.len, color: h.color }));
+    applyHighlights(articleRef.current, renderable);
+  }, [loading, html, study.highlights, dims.w, dims.h, pageCount, paged, fontScale, page]);
+
+  const curPage = paged ? page + 1 : 1;
+
+  // seleção de texto → oferece o menu de categorias
+  const onSelectUp = useCallback(() => {
+    const root = articleRef.current;
+    if (!root) return;
+    const r = selectionRange(root);
+    if (!r) return setSel(null);
+    setSel({
+      x: r.rect.left + r.rect.width / 2,
+      y: r.rect.top,
+      text: r.text,
+      anchor: { page: curPage, kind: "text", start: r.start, len: r.len },
+    });
+  }, [curPage]);
+
+  const onArticleClick = useCallback(
+    (e: React.MouseEvent) => {
+      const mark = (e.target as HTMLElement).closest("mark[data-hl-id]");
+      if (!mark) return;
+      const id = (mark as HTMLElement).dataset.hlId;
+      const h = study.highlights.find((x) => x.id === id);
+      if (h) {
+        study.setActiveHighlight(h);
+        setPanelOpen(true);
+      }
+    },
+    [study],
+  );
+
+  const addHighlight = useCallback(
+    (category: HighlightCategory) => {
+      if (!sel) return;
+      void study.createHighlight(sel.text, sel.anchor, category);
+      window.getSelection()?.removeAllRanges();
+      setSel(null);
+      setPanelOpen(true);
+    },
+    [sel, study],
+  );
+
   const articleStyle: React.CSSProperties = paged
     ? {
         position: "absolute",
@@ -344,6 +404,8 @@ export function MobiReader({ data }: { data: ReaderData }) {
         <div
           ref={scrollRef}
           onScroll={onScroll}
+          onMouseUp={onSelectUp}
+          onClick={onArticleClick}
           className={paged ? "relative flex-1 overflow-hidden" : "flex-1 overflow-y-auto"}
         >
           {loading ? (
@@ -364,15 +426,20 @@ export function MobiReader({ data }: { data: ReaderData }) {
         </div>
 
         {panelOpen && !loading && !error && (
-          <ReaderStudyPanel
-            userBookId={data.userBookId}
+          <ReaderStudyDock
+            page={curPage}
+            numPages={pageCount}
             concepts={data.concepts}
-            page={paged ? page + 1 : undefined}
-            locationLabel={paged ? `Pág. ${page + 1}` : undefined}
+            study={study}
+            onJump={(p) => setPage(Math.min(pageCount - 1, Math.max(0, p - 1)))}
             onClose={() => setPanelOpen(false)}
           />
         )}
       </div>
+
+      {sel && (
+        <HighlightMenu x={sel.x} y={sel.y} onPick={addHighlight} onClose={() => setSel(null)} />
+      )}
 
       {paged && !loading && !error && (
         <footer className="flex h-12 shrink-0 items-center justify-center gap-6 border-t border-[var(--color-line)] bg-[var(--color-paper)]/80 px-4 text-sm backdrop-blur-xl">
