@@ -33,6 +33,7 @@ export function ReaderPagePanel({
   onDeleteLink,
   onJump,
   onClose,
+  scope = "page",
 }: {
   page: number;
   numPages: number;
@@ -49,7 +50,11 @@ export function ReaderPagePanel({
   onDeleteLink: (id: string) => void;
   onJump: (page: number) => void;
   onClose: () => void;
+  // "page": tudo ancorado à página atual (PDF). "book": lista do livro inteiro
+  // (leitores refluíveis, onde "página" não é âncora estável).
+  scope?: "page" | "book";
 }) {
+  const here = scope === "book" ? "no livro" : "nesta página";
   const pageNotes = useMemo(() => notes.filter((n) => n.kind === "NOTE"), [notes]);
   const questions = useMemo(() => notes.filter((n) => n.kind === "QUESTION"), [notes]);
 
@@ -63,7 +68,9 @@ export function ReaderPagePanel({
   return (
     <aside className="flex h-full w-96 max-w-[90vw] shrink-0 flex-col border-l border-[var(--color-line)] bg-[var(--color-surface)] max-xl:absolute max-xl:right-0 max-xl:top-0 max-xl:z-30 max-xl:shadow-2xl">
       <div className="flex items-center gap-2 border-b border-[var(--color-line)] px-4 py-3">
-        <span className="flex-1 text-sm font-medium">Página {page}</span>
+        <span className="flex-1 text-sm font-medium">
+          {scope === "book" ? "Bancada de estudo" : `Página ${page}`}
+        </span>
         <button
           onClick={onClose}
           className="grid size-8 place-items-center rounded-full hover:bg-[var(--color-line)]/60"
@@ -94,9 +101,9 @@ export function ReaderPagePanel({
 
       <div className="flex-1 space-y-6 overflow-y-auto p-4">
         {(tab === "content") && (
-          <Section title="Destaques nesta página" icon={Highlighter}>
+          <Section title={scope === "book" ? "Destaques do livro" : "Destaques nesta página"} icon={Highlighter}>
             {highlights.length === 0 ? (
-              <Empty>Selecione um trecho na página para destacar.</Empty>
+              <Empty>Selecione um trecho {scope === "book" ? "para destacar." : "na página para destacar."}</Empty>
             ) : (
               highlights.map((h) => (
                 <button
@@ -154,10 +161,14 @@ export function ReaderPagePanel({
             action={tab === "content" ? { label: "Adicionar", onClick: () => onTab("notes") } : undefined}
           >
             {tab === "notes" && (
-              <NoteComposer kind="NOTE" placeholder="Escreva uma anotação sobre esta página…" onCreate={onCreateNote} />
+              <NoteComposer
+                kind="NOTE"
+                placeholder={scope === "book" ? "Escreva uma anotação sobre o livro…" : "Escreva uma anotação sobre esta página…"}
+                onCreate={onCreateNote}
+              />
             )}
             {pageNotes.length === 0 ? (
-              <Empty>Nenhuma anotação nesta página ainda.</Empty>
+              <Empty>Nenhuma anotação {here} ainda.</Empty>
             ) : (
               pageNotes.map((n) => <NoteRow key={n.id} note={n} onDelete={onDeleteNote} />)
             )}
@@ -171,10 +182,14 @@ export function ReaderPagePanel({
             action={tab === "content" ? { label: "Adicionar", onClick: () => onTab("questions") } : undefined}
           >
             {tab === "questions" && (
-              <NoteComposer kind="QUESTION" placeholder="O que ficou em aberto nesta página?" onCreate={onCreateNote} />
+              <NoteComposer
+                kind="QUESTION"
+                placeholder={scope === "book" ? "O que ficou em aberto no livro?" : "O que ficou em aberto nesta página?"}
+                onCreate={onCreateNote}
+              />
             )}
             {questions.length === 0 ? (
-              <Empty>Nenhuma pergunta nesta página ainda.</Empty>
+              <Empty>Nenhuma pergunta {here} ainda.</Empty>
             ) : (
               questions.map((n) => <NoteRow key={n.id} note={n} onDelete={onDeleteNote} />)
             )}

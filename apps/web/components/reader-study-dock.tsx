@@ -18,6 +18,7 @@ export function ReaderStudyDock({
   study,
   onJump,
   onClose,
+  scope = "page",
 }: {
   page: number;
   numPages: number;
@@ -25,6 +26,7 @@ export function ReaderStudyDock({
   study: Study;
   onJump: (page: number) => void;
   onClose: () => void;
+  scope?: "page" | "book";
 }) {
   const [tab, setTab] = useState<PanelTab>("content");
   const {
@@ -55,10 +57,13 @@ export function ReaderStudyDock({
     );
   }
 
-  const pageHighlights = highlights.filter((h) => (h.page ?? h.anchor?.page) === page);
+  const book = scope === "book";
   const standaloneNotes = notes.filter((n) => !n.highlightId && !n.isFreePage);
-  const pageNotes = standaloneNotes.filter((n) => n.page === page);
-  const pageLinks = links.filter((l) => l.fromPage === page);
+  // No escopo "livro" (texto refluível) listamos tudo do livro — nada é preso a
+  // um número de página, então nada some ao mudar a fonte.
+  const pageHighlights = book ? highlights : highlights.filter((h) => (h.page ?? h.anchor?.page) === page);
+  const pageNotes = book ? standaloneNotes : standaloneNotes.filter((n) => n.page === page);
+  const pageLinks = book ? links : links.filter((l) => l.fromPage === page);
 
   return (
     <ReaderPagePanel
@@ -77,6 +82,7 @@ export function ReaderStudyDock({
       onDeleteLink={deleteLink}
       onJump={onJump}
       onClose={onClose}
+      scope={scope}
     />
   );
 }

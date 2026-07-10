@@ -475,6 +475,7 @@ export function MobiReader({ data }: { data: ReaderData }) {
               study={study}
               onJump={(p) => setPage(Math.min(pageCount - 1, Math.max(0, p - 1)))}
               onClose={() => setPanelOpen(false)}
+              scope="book"
             />
           ))}
       </div>

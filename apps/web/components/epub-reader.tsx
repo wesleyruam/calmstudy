@@ -592,6 +592,7 @@ export function EpubReader({ data }: { data: ReaderData }) {
               study={study}
               onJump={(p) => setIdx(Math.min(Math.max(0, p - 1), Math.max(0, total - 1)))}
               onClose={() => setPanelOpen(false)}
+              scope="book"
             />
           ))}
       </div>
