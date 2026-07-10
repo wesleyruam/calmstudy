@@ -52,6 +52,44 @@ export function selectionRange(
   return { text, start: a, len: b - a, rect };
 }
 
+/** Nó de texto + índice local que contêm o offset global dentro de `root`. */
+export function nodeAtOffset(root: HTMLElement, offset: number): { node: Text; local: number } | null {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let pos = 0;
+  let cur = walker.nextNode() as Text | null;
+  while (cur) {
+    const len = (cur.nodeValue ?? "").length;
+    if (offset <= pos + len) return { node: cur, local: Math.max(0, offset - pos) };
+    pos += len;
+    cur = walker.nextNode() as Text | null;
+  }
+  return null;
+}
+
+/**
+ * Índice da página (coluna) em que o offset cai, no modo página do MOBI.
+ * O <article> é transladado, mas getBoundingClientRect devolve coords pós-transform
+ * tanto do caractere quanto do artigo, então a diferença é a posição no fluxo de
+ * colunas (= pág*step + deslocamento interno). `step` é a largura de uma página.
+ */
+export function pageOfOffset(article: HTMLElement, offset: number, step: number): number {
+  if (step < 1) return 0;
+  const at = nodeAtOffset(article, offset);
+  if (!at) return 0;
+  const range = document.createRange();
+  const end = Math.min(at.local + 1, at.node.nodeValue?.length ?? at.local);
+  try {
+    range.setStart(at.node, at.local);
+    range.setEnd(at.node, end);
+  } catch {
+    return 0;
+  }
+  const rects = range.getClientRects();
+  const r = rects[0] ?? range.getBoundingClientRect();
+  const a = article.getBoundingClientRect();
+  return Math.max(0, Math.floor((r.left - a.left) / step));
+}
+
 /** Remove todos os <mark data-hl-id> criados por nós, restaurando o texto original. */
 export function clearMarks(root: HTMLElement): void {
   root.querySelectorAll("mark[data-hl-id]").forEach((m) => {

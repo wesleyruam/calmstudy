@@ -21,8 +21,8 @@ import { ReaderStudyDock, HighlightMenu } from "@/components/reader-study-dock";
 import { LayerSelector, type ReaderLayer } from "@/components/layer-selector";
 import { DiscussionPanel } from "@/components/space-discussion-panel";
 import { useReflowStudy } from "@/components/use-reflow-study";
-import { applyHighlights, selectionRange, type TextAnchor } from "@/lib/reflow-highlight";
-import { highlightColor, type HighlightCategory } from "@/lib/highlight-shared";
+import { applyHighlights, selectionRange, pageOfOffset, type TextAnchor } from "@/lib/reflow-highlight";
+import { highlightColor, type HighlightCategory, type HighlightDTO } from "@/lib/highlight-shared";
 import type { ReaderData } from "@/lib/reader";
 
 // ───────────────────────── Parser MOBI (Mobi6 / PalmDOC) ─────────────────────────
@@ -371,6 +371,24 @@ export function MobiReader({ data }: { data: ReaderData }) {
     [sel, study],
   );
 
+  // clicar num destaque na lista → navega até ele no texto e abre a edição
+  const locateHighlight = useCallback(
+    (h: HighlightDTO) => {
+      const anchor = h.anchor as unknown as TextAnchor;
+      const root = articleRef.current;
+      if (root && typeof anchor?.start === "number") {
+        if (paged && step >= 1) {
+          setPage(Math.min(pageCount - 1, Math.max(0, pageOfOffset(root, anchor.start, step))));
+        } else {
+          root.querySelector(`mark[data-hl-id="${h.id}"]`)?.scrollIntoView({ block: "center" });
+        }
+      }
+      study.setActiveHighlight(h);
+      setPanelOpen(true);
+    },
+    [paged, step, pageCount, study],
+  );
+
   const articleStyle: React.CSSProperties = paged
     ? {
         position: "absolute",
@@ -475,6 +493,7 @@ export function MobiReader({ data }: { data: ReaderData }) {
               study={study}
               onJump={(p) => setPage(Math.min(pageCount - 1, Math.max(0, p - 1)))}
               onClose={() => setPanelOpen(false)}
+              onOpenHighlight={locateHighlight}
               scope="book"
             />
           ))}

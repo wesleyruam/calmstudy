@@ -23,7 +23,7 @@ import { LayerSelector, type ReaderLayer } from "@/components/layer-selector";
 import { DiscussionPanel } from "@/components/space-discussion-panel";
 import { useReflowStudy } from "@/components/use-reflow-study";
 import { applyHighlights, selectionRange, type TextAnchor } from "@/lib/reflow-highlight";
-import { highlightColor, type HighlightCategory } from "@/lib/highlight-shared";
+import { highlightColor, type HighlightCategory, type HighlightDTO } from "@/lib/highlight-shared";
 import type { ReaderData } from "@/lib/reader";
 
 // ─────────────────────────── Parsing do EPUB (cliente) ───────────────────────────
@@ -240,6 +240,9 @@ export function EpubReader({ data }: { data: ReaderData }) {
   const [epub, setEpub] = useState<Epub | null>(null);
   const [idx, setIdx] = useState(Math.max(0, data.lastPage || 0));
   const [html, setHtml] = useState("");
+  // capítulo a que o `html` atual pertence — evita aplicar grifos no capítulo
+  // errado no render transitório em que idx já mudou mas o html ainda é o antigo.
+  const [htmlIdx, setHtmlIdx] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fontScale, setFontScale] = useState(1);
@@ -250,6 +253,7 @@ export function EpubReader({ data }: { data: ReaderData }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const articleRef = useRef<HTMLElement>(null);
   const blobsRef = useRef<string[]>([]);
+  const pendingScrollRef = useRef<string | null>(null); // id do grifo a rolar após trocar de capítulo
 
   const [sel, setSel] = useState<{ x: number; y: number; anchor: TextAnchor; text: string } | null>(null);
   const [layer, setLayer] = useState<ReaderLayer>("personal");
@@ -309,6 +313,7 @@ export function EpubReader({ data }: { data: ReaderData }) {
     if (!epub) return;
     const { html: chapterHtml, blobs } = renderChapter(epub, idx);
     setHtml(chapterHtml);
+    setHtmlIdx(idx);
     for (const url of blobsRef.current) URL.revokeObjectURL(url);
     blobsRef.current = blobs;
     scrollRef.current?.scrollTo({ top: 0 });
@@ -382,10 +387,35 @@ export function EpubReader({ data }: { data: ReaderData }) {
     if (loading || !articleRef.current) return;
     const renderable = study.highlights
       .map((h) => ({ id: h.id, anchor: h.anchor as unknown as TextAnchor, color: highlightColor(h) }))
-      .filter((h) => h.anchor?.kind === "text" && h.anchor.chap === idx && typeof h.anchor.start === "number")
+      .filter((h) => h.anchor?.kind === "text" && h.anchor.chap === htmlIdx && typeof h.anchor.start === "number")
       .map((h) => ({ id: h.id, start: h.anchor.start, len: h.anchor.len, color: h.color }));
     applyHighlights(articleRef.current, renderable);
-  }, [loading, html, idx, study.highlights, fontScale, panelOpen]);
+    // se pediram pra localizar um grifo (após trocar de capítulo), rola até ele
+    if (pendingScrollRef.current) {
+      const el = articleRef.current.querySelector(`mark[data-hl-id="${pendingScrollRef.current}"]`);
+      if (el) {
+        el.scrollIntoView({ block: "center" });
+        pendingScrollRef.current = null;
+      }
+    }
+  }, [loading, html, htmlIdx, study.highlights, fontScale, panelOpen]);
+
+  // clicar num destaque na lista → vai ao capítulo/posição dele e abre a edição
+  const locateHighlight = useCallback(
+    (h: HighlightDTO) => {
+      const anchor = h.anchor as unknown as { chap?: number };
+      const chap = typeof anchor?.chap === "number" ? anchor.chap : idx;
+      if (chap === idx) {
+        articleRef.current?.querySelector(`mark[data-hl-id="${h.id}"]`)?.scrollIntoView({ block: "center" });
+      } else {
+        pendingScrollRef.current = h.id;
+        setIdx(chap);
+      }
+      study.setActiveHighlight(h);
+      setPanelOpen(true);
+    },
+    [idx, study],
+  );
 
   // seleção de texto → menu de categorias
   const onSelectUp = useCallback(() => {
@@ -592,6 +622,7 @@ export function EpubReader({ data }: { data: ReaderData }) {
               study={study}
               onJump={(p) => setIdx(Math.min(Math.max(0, p - 1), Math.max(0, total - 1)))}
               onClose={() => setPanelOpen(false)}
+              onOpenHighlight={locateHighlight}
               scope="book"
             />
           ))}

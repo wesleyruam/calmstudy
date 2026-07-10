@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ReaderPagePanel, type PanelTab, type ReaderConcept } from "@/components/reader-page-panel";
 import { HighlightPanel } from "@/components/highlight-panel";
 import { HighlightNotes } from "@/components/highlight-notes";
-import { CATEGORY_META, HIGHLIGHT_CATEGORIES } from "@/lib/highlight-shared";
+import { CATEGORY_META, HIGHLIGHT_CATEGORIES, type HighlightDTO } from "@/lib/highlight-shared";
 import type { useReflowStudy } from "@/components/use-reflow-study";
 
 type Study = ReturnType<typeof useReflowStudy>;
@@ -18,6 +18,7 @@ export function ReaderStudyDock({
   study,
   onJump,
   onClose,
+  onOpenHighlight,
   scope = "page",
 }: {
   page: number;
@@ -26,6 +27,8 @@ export function ReaderStudyDock({
   study: Study;
   onJump: (page: number) => void;
   onClose: () => void;
+  // navega até o destaque no texto além de abri-lo; default só abre.
+  onOpenHighlight?: (h: HighlightDTO) => void;
   scope?: "page" | "book";
 }) {
   const [tab, setTab] = useState<PanelTab>("content");
@@ -75,7 +78,7 @@ export function ReaderStudyDock({
       links={pageLinks}
       tab={tab}
       onTab={setTab}
-      onOpenHighlight={setActiveHighlight}
+      onOpenHighlight={onOpenHighlight ?? setActiveHighlight}
       onCreateNote={(kind, text) => createNote(kind, text, page)}
       onDeleteNote={deleteNote}
       onCreateLink={(toPage, label) => createLink(page, toPage, label)}
