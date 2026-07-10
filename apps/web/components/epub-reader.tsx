@@ -19,6 +19,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { LoadingMark } from "@/components/logo";
 import { StudySessionTracker } from "@/components/study-session-tracker";
 import { ReaderStudyDock, HighlightMenu } from "@/components/reader-study-dock";
+import { LayerSelector, type ReaderLayer } from "@/components/layer-selector";
+import { DiscussionPanel } from "@/components/space-discussion-panel";
 import { useReflowStudy } from "@/components/use-reflow-study";
 import { applyHighlights, selectionRange, type TextAnchor } from "@/lib/reflow-highlight";
 import { highlightColor, type HighlightCategory } from "@/lib/highlight-shared";
@@ -250,7 +252,13 @@ export function EpubReader({ data }: { data: ReaderData }) {
   const blobsRef = useRef<string[]>([]);
 
   const [sel, setSel] = useState<{ x: number; y: number; anchor: TextAnchor; text: string } | null>(null);
+  const [layer, setLayer] = useState<ReaderLayer>("personal");
   const study = useReflowStudy(data.userBookId);
+
+  const activeSpace =
+    layer === "personal" || layer === "community" ? null : data.spaces.find((s) => s.id === layer) ?? null;
+  const isCommunity = layer === "community";
+  const showLayers = data.spaces.length > 0 || data.communityCount > 0;
 
   // preferências (tamanho da fonte)
   useEffect(() => {
@@ -462,6 +470,20 @@ export function EpubReader({ data }: { data: ReaderData }) {
           >
             {fullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
           </button>
+          {showLayers && (
+            <LayerSelector
+              spaces={data.spaces}
+              community={data.communityCount > 0}
+              value={layer}
+              onChange={(l) => {
+                setLayer(l);
+                if (l !== "personal") {
+                  study.setActiveHighlight(null);
+                  setPanelOpen(true);
+                }
+              }}
+            />
+          )}
           <button
             onClick={() => setPanelOpen((v) => !v)}
             className={[
@@ -543,16 +565,35 @@ export function EpubReader({ data }: { data: ReaderData }) {
           </aside>
         )}
 
-        {panelOpen && !loading && !error && (
-          <ReaderStudyDock
-            page={idx + 1}
-            numPages={total}
-            concepts={data.concepts}
-            study={study}
-            onJump={(p) => setIdx(Math.min(Math.max(0, p - 1), Math.max(0, total - 1)))}
-            onClose={() => setPanelOpen(false)}
-          />
-        )}
+        {panelOpen && !loading && !error &&
+          (!study.activeHighlight && activeSpace ? (
+            <DiscussionPanel
+              mode="space"
+              title={activeSpace.name}
+              subtitle="Discussão"
+              spaceId={activeSpace.id}
+              page={idx + 1}
+              onClose={() => setPanelOpen(false)}
+            />
+          ) : !study.activeHighlight && isCommunity ? (
+            <DiscussionPanel
+              mode="community"
+              title="Comunidade"
+              subtitle="Conhecimento público"
+              bookId={data.bookId}
+              page={idx + 1}
+              onClose={() => setPanelOpen(false)}
+            />
+          ) : (
+            <ReaderStudyDock
+              page={idx + 1}
+              numPages={total}
+              concepts={data.concepts}
+              study={study}
+              onJump={(p) => setIdx(Math.min(Math.max(0, p - 1), Math.max(0, total - 1)))}
+              onClose={() => setPanelOpen(false)}
+            />
+          ))}
       </div>
 
       {sel && (

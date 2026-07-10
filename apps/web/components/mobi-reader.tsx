@@ -18,6 +18,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { LoadingMark } from "@/components/logo";
 import { StudySessionTracker } from "@/components/study-session-tracker";
 import { ReaderStudyDock, HighlightMenu } from "@/components/reader-study-dock";
+import { LayerSelector, type ReaderLayer } from "@/components/layer-selector";
+import { DiscussionPanel } from "@/components/space-discussion-panel";
 import { useReflowStudy } from "@/components/use-reflow-study";
 import { applyHighlights, selectionRange, type TextAnchor } from "@/lib/reflow-highlight";
 import { highlightColor, type HighlightCategory } from "@/lib/highlight-shared";
@@ -175,8 +177,15 @@ export function MobiReader({ data }: { data: ReaderData }) {
   const [dims, setDims] = useState({ w: 0, h: 0 });
   const [panelOpen, setPanelOpen] = useState(false);
   const [sel, setSel] = useState<{ x: number; y: number; anchor: TextAnchor; text: string } | null>(null);
+  // camada da bancada: pessoal · comunidade · id de um espaço (discussão)
+  const [layer, setLayer] = useState<ReaderLayer>("personal");
 
   const study = useReflowStudy(data.userBookId);
+
+  const activeSpace =
+    layer === "personal" || layer === "community" ? null : data.spaces.find((s) => s.id === layer) ?? null;
+  const isCommunity = layer === "community";
+  const showLayers = data.spaces.length > 0 || data.communityCount > 0;
 
   const scrollRef = useRef<HTMLDivElement>(null); // container (stage no modo página)
   const articleRef = useRef<HTMLElement>(null);
@@ -396,6 +405,20 @@ export function MobiReader({ data }: { data: ReaderData }) {
           <ThemeToggle />
           <Link href={`/caderno/${data.userBookId}`} className="grid size-8 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60" title="Caderno do livro" aria-label="Caderno do livro"><Notebook className="size-4" /></Link>
           <button onClick={toggleFullscreen} className="grid size-8 place-items-center rounded-full text-[var(--color-ink-soft)] transition-colors hover:bg-[var(--color-line)]/60" title={fullscreen ? "Sair da tela cheia" : "Tela cheia"} aria-label={fullscreen ? "Sair da tela cheia" : "Tela cheia"}>{fullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}</button>
+          {showLayers && (
+            <LayerSelector
+              spaces={data.spaces}
+              community={data.communityCount > 0}
+              value={layer}
+              onChange={(l) => {
+                setLayer(l);
+                if (l !== "personal") {
+                  study.setActiveHighlight(null);
+                  setPanelOpen(true);
+                }
+              }}
+            />
+          )}
           <button onClick={() => setPanelOpen((v) => !v)} className={["grid size-8 place-items-center rounded-full transition-colors hover:bg-[var(--color-line)]/60", panelOpen ? "bg-[var(--color-accent-soft)] text-[var(--color-ink)]" : "text-[var(--color-ink-soft)]"].join(" ")} title="Bancada de estudo" aria-label="Bancada de estudo"><PanelRight className="size-4" /></button>
         </div>
       </header>
@@ -425,16 +448,35 @@ export function MobiReader({ data }: { data: ReaderData }) {
           )}
         </div>
 
-        {panelOpen && !loading && !error && (
-          <ReaderStudyDock
-            page={curPage}
-            numPages={pageCount}
-            concepts={data.concepts}
-            study={study}
-            onJump={(p) => setPage(Math.min(pageCount - 1, Math.max(0, p - 1)))}
-            onClose={() => setPanelOpen(false)}
-          />
-        )}
+        {panelOpen && !loading && !error &&
+          (!study.activeHighlight && activeSpace ? (
+            <DiscussionPanel
+              mode="space"
+              title={activeSpace.name}
+              subtitle="Discussão"
+              spaceId={activeSpace.id}
+              page={curPage}
+              onClose={() => setPanelOpen(false)}
+            />
+          ) : !study.activeHighlight && isCommunity ? (
+            <DiscussionPanel
+              mode="community"
+              title="Comunidade"
+              subtitle="Conhecimento público"
+              bookId={data.bookId}
+              page={curPage}
+              onClose={() => setPanelOpen(false)}
+            />
+          ) : (
+            <ReaderStudyDock
+              page={curPage}
+              numPages={pageCount}
+              concepts={data.concepts}
+              study={study}
+              onJump={(p) => setPage(Math.min(pageCount - 1, Math.max(0, p - 1)))}
+              onClose={() => setPanelOpen(false)}
+            />
+          ))}
       </div>
 
       {sel && (
