@@ -4,6 +4,7 @@
 
 export { FilesystemStorage } from "./storage/filesystem.js";
 export { createRedis, getDocumentQueue, enqueueDocument } from "./queue.js";
+export { publish, subscribe } from "./realtime.js";
 export { getOrCreateDefaultUser, DEFAULT_USER_EMAIL } from "./users.js";
 export { ingestUpload, formatFromFilename } from "./books.js";
 export { storeCover, deleteCover, coverKey } from "./covers.js";

@@ -1,7 +1,15 @@
 import "server-only";
 import { prisma } from "@calmstudy/db";
+import { publish } from "@calmstudy/infra";
 import { canManage, type SpaceRole } from "./space-shared";
 import type { ContributionDTO, ContributionKind } from "./contribution-shared";
+
+// Canais de tempo real (SSE): discussão do espaço e camada da comunidade (por livro).
+const spaceChannel = (spaceId: string) => `space:${spaceId}`;
+const bookChannel = (bookId: string) => `book:${bookId}`;
+type RtType = "created" | "updated" | "deleted";
+const emit = (channel: string, type: RtType, page: number | null, id: string) =>
+  void publish(channel, { type, page, id });
 
 /** Espaços do usuário que usam este livro (seletor de camada no leitor). */
 export async function getSpacesForBook(userId: string, bookId: string) {
@@ -147,6 +155,8 @@ export async function createContribution(
     },
     select: SELECT,
   });
+  // nasce SPACE → empurra só para a discussão do espaço
+  emit(spaceChannel(input.spaceId), "created", created.page, created.id);
   return toDTO(created, userId, canManage(member.role as SpaceRole));
 }
 
@@ -156,9 +166,15 @@ export async function setVisibility(
   id: string,
   visibility: "SPACE" | "PUBLIC",
 ): Promise<boolean> {
-  const c = await prisma.contribution.findUnique({ where: { id }, select: { authorId: true } });
+  const c = await prisma.contribution.findUnique({
+    where: { id },
+    select: { authorId: true, spaceId: true, bookId: true, page: true },
+  });
   if (!c || c.authorId !== userId) return false;
   await prisma.contribution.update({ where: { id }, data: { visibility } });
+  // atualiza a discussão do espaço; na comunidade, aparece (PUBLIC) ou some (SPACE)
+  emit(spaceChannel(c.spaceId), "updated", c.page, id);
+  emit(bookChannel(c.bookId), visibility === "PUBLIC" ? "created" : "deleted", c.page, id);
   return true;
 }
 
@@ -176,17 +192,21 @@ export async function reportContribution(userId: string, id: string, reason?: st
 
 /** Remove uma contribuição (autor ou moderador do espaço dela). Cascata nas respostas. */
 export async function deleteContribution(userId: string, id: string): Promise<boolean> {
-  const c = await prisma.contribution.findUnique({ where: { id }, select: { authorId: true, spaceId: true } });
-  if (!c) return false;
-  if (c.authorId === userId) {
-    await prisma.contribution.delete({ where: { id } });
-    return true;
-  }
-  const member = await prisma.spaceMember.findUnique({
-    where: { spaceId_userId: { spaceId: c.spaceId, userId } },
-    select: { role: true },
+  const c = await prisma.contribution.findUnique({
+    where: { id },
+    select: { authorId: true, spaceId: true, bookId: true, page: true, visibility: true },
   });
-  if (!member || !canManage(member.role as SpaceRole)) return false;
+  if (!c) return false;
+  const isAuthor = c.authorId === userId;
+  if (!isAuthor) {
+    const member = await prisma.spaceMember.findUnique({
+      where: { spaceId_userId: { spaceId: c.spaceId, userId } },
+      select: { role: true },
+    });
+    if (!member || !canManage(member.role as SpaceRole)) return false;
+  }
   await prisma.contribution.delete({ where: { id } });
+  emit(spaceChannel(c.spaceId), "deleted", c.page, id);
+  if (c.visibility === "PUBLIC") emit(bookChannel(c.bookId), "deleted", c.page, id);
   return true;
 }

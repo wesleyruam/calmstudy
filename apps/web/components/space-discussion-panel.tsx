@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   X, CircleHelp, MessageSquare, Quote, Send, Trash2, CornerDownRight, Globe, Lock, Flag, ShieldAlert,
 } from "lucide-react";
@@ -43,6 +43,39 @@ export function DiscussionPanel({
   }, [mode, spaceId, bookId, page]);
 
   useEffect(() => load(), [load]);
+
+  // Tempo real (SSE): assina o canal do espaço/livro e refaz o load() da página
+  // atual quando chega um "nudge" dela. O stream fica aberto entre trocas de
+  // página (filtra client-side por página via ref, sem reabrir a conexão).
+  const pageRef = useRef(page);
+  pageRef.current = page;
+  const loadRef = useRef(load);
+  loadRef.current = load;
+  useEffect(() => {
+    const url =
+      mode === "space"
+        ? `/api/spaces/${spaceId}/stream`
+        : `/api/community/stream?bookId=${bookId}`;
+    const es = new EventSource(url);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    es.onmessage = (e) => {
+      let d: { page?: number } | null = null;
+      try {
+        d = JSON.parse(e.data);
+      } catch {
+        return;
+      }
+      // só reage a eventos da página que estou vendo (nudge carrega a página)
+      if (typeof d?.page === "number" && d.page !== pageRef.current) return;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => loadRef.current(), 150); // agrupa rajadas
+    };
+    // onerror: o EventSource reconecta sozinho; ao reconectar, o load() reconcilia
+    return () => {
+      if (timer) clearTimeout(timer);
+      es.close();
+    };
+  }, [mode, spaceId, bookId]);
 
   async function create(kind: ContributionKind, contentText: string, quotedText?: string, parentId?: string) {
     if (mode !== "space") return;
